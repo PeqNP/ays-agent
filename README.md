@@ -311,3 +311,15 @@ ram,40,20-90
 ```
 
 Please note that the threshold configuration is optional for each value.
+
+### Properties
+
+TBD: Collect custom properties such as IP address, OS information, etc.
+
+Either this information will be provided manually or options will be provided to collect information automatically by the agent.
+
+One example:
+
+```bash
+$ ays-agent --properties=ip_address,os_info,apps
+```

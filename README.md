@@ -1,12 +1,12 @@
 # ays-agent
 
-The At Your Service Agent is a single Python script that allows you to monitor a server.
+The At Your Service Agent is a Python app that allows you to monitor a system.
 
 The agent provides a few mechanisms to report status to @ys. You can:
 
-- Use the built-in resource usage agent. This will send CPU, HDD, RAM, and/or network usage. Which systems you monitor is configurable.
+- Use the built-in resource usage agent. This will send CPU, HDD, RAM, and/or network usage to @ys.
 - Call the agent as a one-shot script with a value or status.
-- Monitor a CSV file that is written by an external process. Each value is on a separate line. The name is the first column, the value in the second column.
+- Monitor a CSV file that is written by an external process.
 
 This agent integrates directly with the [Self Reporting Agents service](https://api.bithead.io:8443/help/library/what-is-an-agent/). Therefore, the property values provided to the CLI app are the same as those described in the documentation. For example, the alerting levels (`critical` ... `warning`), status states (`critical` ... `healthy`), etc. use the same parameter values.
 
@@ -43,9 +43,9 @@ Subsequent calls to the `ays-agent` will be:
 $ ays-agent
 ```
 
-The `write-config` parameter will write _all_ values provided to the config file, including the `value` parameter. However, if you do send the `value` parameter on a subsequent call, the `value` provided will over-write the config's `value`.
+The `write-config` parameter will write _all_ values provided to the config file, including the `value` parameter. However, if you send the `value` parameter on a subsequent call, the `value` provided will over-write the config's `value`. This goes for all other parameters as well.
 
-You may also write the configuration directly to `~/.ays-agent` yourself. Below are all of the key/value pairs:
+You may also write the configuration directly to `~/.ays-agent` yourself. Below is a YAML file with all key/value pairs:
 
 ```yaml
 server: '[server]'
@@ -76,10 +76,6 @@ status:
   state: '[healthy_to_critical_state]'
 ```
 
-## A Note On Statusing
-
-If no `value`, `values`, `status`, or the agent has not been configured to collect data as a service, the agent will act as a heartbeat sensor. In other words, it's not necessary to send data to @ys if the only purpose of the agent is to inform @ys that the service is living.
-
 ## Parameters
 
 ### `--server`
@@ -88,7 +84,7 @@ The path to the @ys `agent` service endpoint.
 
 **Default:** https://api.bithead.io:9443/agent/
 
-## `--org-secret`
+### `--org-secret`
 
 A required secret that allows you to communicate with your respective organization's system graph. Please get this value from your administrator.
 
@@ -114,7 +110,7 @@ The hostname will be formatted to conform to @ys node naming convention. This me
 
 ### `--child` (optional)
 
-A relative path to a child node that lives under the `parent`'s node path. e.g. it can be a single path name `my-machine` or it define the group it is part of `building-1.floor-3.room-2.my-machine`.
+A relative path to a child node that lives under the `parent`'s node path. e.g. it can be a single path name `my-machine` or it can define the group it is associated to `building-1.floor-3.room-2.my-machine`.
 
 For example, if the `parent` node path is `com.example.sites`, the single path node will live at `com.example.sites.my-machine`, the group path `com.example.sites.building-1.floor-3.room-2.my-machine`, respectively.
 
@@ -136,7 +132,7 @@ Indicates that this agent is responsible for managing its own configuration. Any
 
 Supported values are `t`, `y`, `true`, `1` for the value of "true." All other values are considered "false."
 
-The only context where this should be `false` is if multiple agents should be associated to the same child node. Leave this `true` in all other contexts. Otherwise, the health status of the node may be skewed over time.
+The only context where this should be `false` is if multiple agents should be associated to the same child node. Leave this `true` in all other contexts. Otherwise, the health status of the node may be skewed over time if the configuration changes.
 
 This value is ignored if no child is created.
 
@@ -152,17 +148,21 @@ The timeout, in seconds, in which the agent will be considered unhealthy if it d
 
 The alerting level to transition into if hearbeat timeout exceeded.
 
-Ignored if `hearbeat-interval` not provided.
+This is ignored if the `hearbeat-interval` is not provided.
 
 **Default:** `critical`
 
-### Values & Status
+Available options are defined in the [Agent Heartbeat Configuration documentation](https://api.bithead.io:8443/help/library/agents-heartbeat/).
+
+### Reporting Values & Status
 
 Please provide only _one_ reporting type. Or, provide no reporting types.
 
-Again, if no reporting type is provided, the agent will act as a heartbeat sensor.
+If no reporting type is provided (`value`, `values`, et al) the agent will act as a heartbeat sensor. In other words, it's not necessary to send data to @ys if the only purpose of the agent is to inform @ys that the service is living.
 
 #### Single value (optional)
+
+Send a single value to @ys.
 
 ##### `--value`
 
@@ -172,17 +172,18 @@ Report a single value to report to @ys.
 $ --value=70
 ```
 
-##### `--value-name`
+##### `--value-name` (optional)
 
 The respective name for the value.
 
 **Default:** `value_name`
 
-##### `--value-threshold`
+##### `--value-threshold` (optional)
 
-The threshold range this value must be in to be considered healthy.
+Thresholds are used to determine if the value is nominal or unhealthy.
 
 Trigger when value is below threshold of `20`:
+
 ```bash
 $ --value-threshold="<20"
 ```
@@ -190,26 +191,32 @@ $ --value-threshold="<20"
 Please replace `20` with your own value. All other examples below should have their values replaced with the respective value you wish to use.
 
 Trigger when value is above threshold of `90`:
+
 ```bash
 $ --value-threshold=">90"
 ```
 
 Trigger when value is equal to `1`:
+
 ```bash
 $ --value-threshold="=1"
 ```
 
 Trigger when value is not equal to `1`:
+
 ```bash
 $ --value-threshold="!=1"
 ```
 
 Trigger when value falls outside of the range of `20` and `90`:
+
 ```bash
 $ --value-threshold="20-90"
 ```
 
 #### Multiple values (optional)
+
+Send multiple values to @ys. Useful when you need to report multiple subsystems in the same payload.
 
 ##### `--values`
 
@@ -219,7 +226,7 @@ Report multiple values to @ys as a comma delimited list.
 $ --values=45,50,60
 ```
 
-##### `--value-names`
+##### `--value-names` (optional)
 
 The respective value names for each value. These will map to the respective values provided by `--values`.
 
@@ -229,20 +236,23 @@ $ --value-names=cpu,hdd,ram
 
 **Default:** `value_name0` ... `value_nameN`
 
-##### `--value-thresholds`
+##### `--value-thresholds` (optional)
 
-Define thresholds for multiple values shares the same syntax used for single threshold values (please refer to `--value-threshold`) but with a comma delimited list.
+Define thresholds for multiple values in comma delimited list. Please refer to `--value-threshold` for syntax.
 
 This defines three thresholds for the above three values:
+
 ```bash
 $ --value-thresholds="<20,>90,20-90"
 ```
 
-The first value (`45` - `cpu`) will trigger if the value is below `20`.
-The second value (`50` - `hdd`) will trigger if the value is above `90`.
-The third value (`60` - `ram`) will trigger when the value falls outside of the range of `20` and `90`.
+- The first value (`45` - `cpu`) will trigger if the value is below `20`.
+- The second value (`50` - `hdd`) will trigger if the value is above `90`.
+- The third value (`60` - `ram`) will trigger when the value falls outside of the range of `20` and `90`.
 
 #### Status Message (optional)
+
+Send the status of the system.
 
 You may provide the message, state, or both the message and the state. Default values listed below.
 
@@ -257,3 +267,47 @@ The message as to why the status is changing.
 The state the node will transition into.
 
 **Default:** `critical`
+
+Available options are defined in the [Report a Status documentation](https://api.bithead.io:8443/help/library/agents-status-value/).
+
+### Services
+
+The agent can be ran as a service to monitor common use cases.
+
+These options must be coupled with the `--interval` parameter.
+
+#### `--monitor-resources`
+
+Monitor system resources. You may choose to monitor `all` resources or specific ones.
+
+```bash
+$ ays-agent --monitor-resources=all --interval=60
+```
+
+OR
+
+```bash
+$ ays-agent --monitor-resources=cpu --interval=60
+```
+
+Available resources: `cpu`, `hdd`, `ram`, `network`
+
+#### `--monitor-file`
+
+Monitor the contents of a CSV file.
+
+```bash
+$ ays-agent --monitor-file=/path/to/file.csv --interval=60
+```
+
+Each value is on a separate line. The name is the first column, the value in the second, and the third is the threshold configuration.
+
+Example:
+
+```
+cpu,30,<20
+hdd,50,>90
+ram,40,20-90
+```
+
+Please note that the threshold configuration is optional for each value.

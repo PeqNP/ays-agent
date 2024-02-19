@@ -188,6 +188,8 @@ def main(
     # NOTE: Options must be checked before they are written to config.
     if write_config:
         options.save()
+        print("[green]Saved configuration to disk successfully.[/green]")
+        raise typer.Exit()
 
     # TODO: Emit action if --dry-run provided
     # TODO: Execute action

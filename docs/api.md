@@ -80,7 +80,7 @@ Again, if you wish to manually report `--value`, `--values`, `--status`, on your
 
 ## `--parent`
 
-The parent node path this agent will communicate with.
+The parent node path this agent will relate to.
 
 ## `--monitor-name` (optional)
 
@@ -298,12 +298,12 @@ ram,40,20-90
 
 Please note that the threshold configuration is optional for each value.
 
-## `--execute`
+## `--monitor-program`
 
-Execute a CLI app, script, etc. to derive a value to report on.
+Execute a CLI program to derive value(s) to report on.
 
 ```bash
-$ agent-sensor --execute=/path/to/script --value-threshold="ne0"
+$ agent-sensor --monitor-program=/path/to/script --value-threshold="ne0"
 ```
 
 This will execute the script at `/path/to/script`, which will return a single value of either `1` or `0`, and trigger an alert if the value returned does not equal `0`.

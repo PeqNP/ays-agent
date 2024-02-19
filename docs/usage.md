@@ -65,9 +65,9 @@ $ ays-agent --monitor-resources=all --interval=60
 
 This will send resource usage every 60 seconds, instead of the default of 5 minutes.
 
-## Monitor an Application
+## Monitor a Program
 
-Using the `--script` option you can report one or more values of your application's state.
+Using the `--monitor-program` option you can report one or more values of your application's state.
 
 Here's an example where we return a `1`, if the application is running, or `0`, if not running:
 
@@ -87,7 +87,7 @@ fi
 Now configure the agent to run this script every 2 minutes and alert when the value is not equal to `1`.
 
 ```bash
-$ agent-sensor --execute=/path/to/script.sh --interval=120 --value-threshold=ne1
+$ agent-sensor --monitor-program=/path/to/script.sh --interval=120 --value-threshold=ne1
 ```
 
 The values echoed by the script must match the formatting requirements of the `--value` or `--values` options. For a single `value`, a numeric value e.g. `1.0`. For multiple `values`, a comma delimited list of numeric values e.g. `1.0,2.0,3.0`.

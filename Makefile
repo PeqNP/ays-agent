@@ -1,7 +1,7 @@
 init:
-    pip install -r requirements.txt
+	pip install -r requirements.txt
 
 test:
-    py.test tests
+	pytest -vv --log-cli-level Debug ./tests
 
 .PHONY: init test

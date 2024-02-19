@@ -6,7 +6,7 @@ from typing import Optional
 from typing_extensions import Annotated
 from pathlib import Path
 
-from ays_agent import get_name, get_version
+from ays_agent import get_name, get_version, save_config
 
 class NodeType(str, Enum):
     machine = "machine"
@@ -142,6 +142,9 @@ def main(
     write_config: Annotated[bool, typer.Option(
         help="Write all options to configuration file."
     )] = False,
+    dry_run: Annotated[bool, typer.Option(
+        help="Emit the action that will take place, with the specified parameters, w/o sending data to @ys."
+    )] = False,
 ) -> None:
     print("Org secret:", org_secret)
     print("[bold red]Server:[/bold red]", f"[green]{server}[/green]")
@@ -172,3 +175,36 @@ def main(
     print("Monitor program:", monitor_program)
 
     print("Write config:", write_config)
+    print("Dry run:", dry_run)
+
+    # TODO: Load config. Overwrite the config values with the options provided
+    # by user before validating the commands. This is necessary as a user may
+    # save the config with invalid values.
+
+    # NOTE: Options must be checked before they are written to config.
+    if write_config:
+        save_config(
+            org_secret=org_secret,
+            server=server,
+            interval=interval,
+            parent=parent,
+            monitor_name=monitor_name,
+            child=child,
+            create_child=create_child,
+            node_type=node_type,
+            managed=managed,
+            heartbeat_timeout=heartbeat_timeout,
+            heartbeat_level=heartbeat_level,
+            value=value,
+            value_name=value_name,
+            value_threshold=value_threshold,
+            values=values,
+            value_names=value_names,
+            value_thresholds=value_thresholds,
+            status_message=status_message,
+            status_state=status_state,
+            monitor_resources=monitor_resources,
+            monitor_file=monitor_file,
+            monitor_program=monitor_program
+        )
+

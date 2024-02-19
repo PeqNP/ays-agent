@@ -138,6 +138,10 @@ def main(
         help="Execute a CLI program to derive value(s) to report on.",
         show_default=False
     )] = None,
+
+    write_config: Annotated[bool, typer.Option(
+        help="Write all options to configuration file."
+    )] = False,
 ) -> None:
     print("Org secret:", org_secret)
     print("[bold red]Server:[/bold red]", f"[green]{server}[/green]")
@@ -166,3 +170,5 @@ def main(
     print("Monitor resources:", monitor_resources)
     print("Monitor file:", monitor_file)
     print("Monitor program:", monitor_program)
+
+    print("Write config:", write_config)

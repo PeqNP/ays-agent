@@ -1,3 +1,11 @@
+#
+# CLI for the agent-sensor
+#
+# Docs:
+# - [Typer](https://typer.tiangolo.com/) - CLI API
+# - [Rich](https://rich.readthedocs.io/en/stable/) - Display rich text to terminal
+#
+
 import typer
 
 from enum import Enum
@@ -6,7 +14,7 @@ from typing import Optional
 from typing_extensions import Annotated
 from pathlib import Path
 
-from ays_agent import get_name, get_version, save_config
+from ays_agent import get_name, get_version, CLIOptions
 
 class NodeType(str, Enum):
     machine = "machine"
@@ -146,65 +154,40 @@ def main(
         help="Emit the action that will take place, with the specified parameters, w/o sending data to @ys."
     )] = False,
 ) -> None:
-    print("Org secret:", org_secret)
-    print("[bold red]Server:[/bold red]", f"[green]{server}[/green]")
-    print("Interval:", interval)
-    print("Parent:", parent)
-    print("Monitor name:", monitor_name)
-    print("Child:", child)
-    print("Create child:", create_child)
-    print("Node type:", node_type)
-    print("Managed:", managed)
-
-    print("Heartbeat timeout:", heartbeat_timeout)
-    print("Heartbeat level:", heartbeat_level)
-
-    print("Value:", value)
-    print("Value name:", value_name)
-    print("Value threshold:", value_threshold)
-
-    print("Values:", values)
-    print("Value names:", value_names)
-    print("Value thresholds:", value_thresholds)
-
-    print("Status message:", status_message)
-    print("Status state:", status_state)
-
-    print("Monitor resources:", monitor_resources)
-    print("Monitor file:", monitor_file)
-    print("Monitor program:", monitor_program)
-
-    print("Write config:", write_config)
-    print("Dry run:", dry_run)
-
-    # TODO: Load config. Overwrite the config values with the options provided
-    # by user before validating the commands. This is necessary as a user may
-    # save the config with invalid values.
+    # Load options from disk, if any
+    options = CLIOptions.load()
+    # Merge options provided
+    options.merge(
+        org_secret=org_secret,
+        server=server,
+        interval=interval,
+        parent=parent,
+        monitor_name=monitor_name,
+        child=child,
+        create_child=create_child,
+        node_type=node_type,
+        managed=managed,
+        heartbeat_timeout=heartbeat_timeout,
+        heartbeat_level=heartbeat_level,
+        value=value,
+        value_name=value_name,
+        value_threshold=value_threshold,
+        values=values,
+        value_names=value_names,
+        value_thresholds=value_thresholds,
+        status_message=status_message,
+        status_state=status_state,
+        monitor_resources=monitor_resources,
+        monitor_file=monitor_file,
+        monitor_program=monitor_program
+    )
+    # Ensure options are valid. This must happen regardless if CLI options are
+    # provided or not as the user may write invalid config to the config file.
+    options.check()
 
     # NOTE: Options must be checked before they are written to config.
     if write_config:
-        save_config(
-            org_secret=org_secret,
-            server=server,
-            interval=interval,
-            parent=parent,
-            monitor_name=monitor_name,
-            child=child,
-            create_child=create_child,
-            node_type=node_type,
-            managed=managed,
-            heartbeat_timeout=heartbeat_timeout,
-            heartbeat_level=heartbeat_level,
-            value=value,
-            value_name=value_name,
-            value_threshold=value_threshold,
-            values=values,
-            value_names=value_names,
-            value_thresholds=value_thresholds,
-            status_message=status_message,
-            status_state=status_state,
-            monitor_resources=monitor_resources,
-            monitor_file=monitor_file,
-            monitor_program=monitor_program
-        )
+        options.save()
 
+    # TODO: Emit action if --dry-run provided
+    # TODO: Execute action

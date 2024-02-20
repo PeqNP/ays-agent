@@ -1,3 +1,4 @@
+import logging
 import re
 
 from typing import List
@@ -82,7 +83,6 @@ class CLIOptions(object):
     def merge(self, **kwargs) -> None:
         self.cli_options = CLIOptions(**kwargs)
 
-        import logging
         keys = list(self.__dict__.keys())
         try:
             keys.remove("cli_options")
@@ -105,11 +105,7 @@ class CLIOptions(object):
             "relationship": {"type": "parent", "monitor_name": self.monitor_name},
         }
         if self.value:
-            params["value"] = {
-                "name": self.value_name,
-                "value": float(self.value),
-                "threshold": get_threshold(self.value_threshold)
-            }
+            params["value"] = get_value(self.value_name, self.value, self.value_threshold)
         return self.server, params
 
     def save(self) -> None:
@@ -119,7 +115,19 @@ class CLIOptions(object):
 
 AVAIL_THRESH_LEVELS = ["warning", "error", "critical"]
 
+def get_value(name, value, threshold):
+    value = {
+        "name": name or "value",
+        "value": float(value),
+        "threshold": get_threshold(threshold)
+    }
+    if not value.get("threshold"):
+        value.pop("threshold", None)
+    return value
+
 def get_threshold(thresh):
+    if not thresh:
+        return None
     # Apparently the `click` / `typer` library do not remove quotes around values
     thresh = thresh.lower().strip("'").strip('"')
     if ">" in thresh:

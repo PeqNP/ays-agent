@@ -7,6 +7,11 @@ from typing_extensions import Optional, Self
 AVAIL_THRESH_LEVELS = ["warning", "error", "critical"]
 AVAIL_STATUS_STATES = ["healthy", "warning", "error", "critical"]
 
+NODE_RESERVED_NAMES = ["measurements", "c", "xff"]
+NODE_VALID_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789_-"
+NODE_VALID_FIRST_CHARS = "abcdefghijklmnopqrstuvwxyz"
+NODE_MAX_NAME_LENGTH = 30
+
 def get_name() -> str:
     return "ays-agent"
 
@@ -114,8 +119,13 @@ def get_agent_payload(options) -> None:
     params = {
         "org_secret": options.org_secret,
         "parent": {"property": "path", "value": options.parent},
-        "relationship": {"type": "parent", "monitor_name": options.monitor_name},
     }
+    if options.child:
+        params["relationship"] = {"type": "child", "monitor_name": options.monitor_name, "path": get_formatted_node_name(options.child)}
+    elif options.create_child:
+        params["relationship"] = {"type": "child", "monitor_name": options.monitor_name, "path": options.monitor_name}
+    else:
+        params["relationship"] = {"type": "parent", "monitor_name": options.monitor_name}
     if options.value:
         params["value"] = get_value(options.value_name, options.value, options.value_threshold)
     elif options.values:
@@ -125,6 +135,28 @@ def get_agent_payload(options) -> None:
     return options.server, params
 
 # Private API
+
+def get_formatted_node_name(name: str) -> str:
+    """ Standardize a node name to follow @ys node name conventions.
+
+    This removes all characters outside of the acceptable range with hyphens.
+    Duplicate hyphens are removed.
+    """
+    if not name:
+        raise AgentException("Name must be greater than zero")
+    if name[0] not in NODE_VALID_FIRST_CHARS:
+        raise AgentException(f"A node name must start with one of the following characters ({NODE_VALID_FIRST_CHARS})")
+    if len(name) > NODE_MAX_NAME_LENGTH:
+        raise AgentException(f"A node name may not exceed {NODE_MAX_NAME_LENGTH} characters")
+    node_name = ""
+    for c in name:
+        if c not in NODE_VALID_CHARS:
+            node_name += "-"
+        else:
+            node_name += c
+    # Remove duplicate hyphens, if any
+    node_name = re.sub(r"-+", "-", node_name)
+    return node_name
 
 def get_status_state(state) -> str:
     """ Returns provided status state or `critical` if not provided. """

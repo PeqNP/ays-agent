@@ -219,3 +219,50 @@ def test_send_status(p_send_request):
     options["status_state"] = "super"
     with pytest.raises(AgentException, match=r"^Invalid status state \(super\). Available options are \(healthy, warning, error, critical\)$"):
         cli.main(**options)
+
+@patch("ays_agent.cli.send_request")
+@patch("ays_agent.cli.get_hostname", patch_string)
+def test_create_child(p_send_request):
+    options = {
+        "org_secret": "aaa",
+        "parent": "com.unittest.create_child",
+        "child": "a-child"
+    }
+
+    # describe: provide status; no state provided
+    _, args = call_cli(options, p_send_request)
+    assert args == {
+        "org_secret": "aaa",
+        "parent": {"property": "path", "value": "com.unittest.create_child"},
+        "relationship": {"type": "child", "monitor_name": "testing", "path": "a-child"},
+    }, "it: should send correct values"
+
+    # describe: child name does not match naming convention
+    options["child"] = "a child**node"
+    _, args = call_cli(options, p_send_request)
+    assert args == {
+        "org_secret": "aaa",
+        "parent": {"property": "path", "value": "com.unittest.create_child"},
+        "relationship": {"type": "child", "monitor_name": "testing", "path": "a-child-node"},
+    }, "it: should send correct values"
+
+    # describe: child name has invalid first character
+    options["child"] = "0name"
+    with pytest.raises(AgentException, match=r"^A node name must start with one of the following characters \(abcdefghijklmnopqrstuvwxyz\)$"):
+        cli.main(**options)
+
+    # describe: child name is greater than max length
+    options["child"] = "e123456789012345678901234567890"
+    assert len(options["child"]) == 31 # sanity
+    with pytest.raises(AgentException, match=r"^A node name may not exceed 30 characters$"):
+        cli.main(**options)
+
+    # describe: creat child by adopting the monitor name
+    options.pop("child")
+    options["create_child"] = True
+    _, args = call_cli(options, p_send_request)
+    assert args == {
+        "org_secret": "aaa",
+        "parent": {"property": "path", "value": "com.unittest.create_child"},
+        "relationship": {"type": "child", "monitor_name": "testing", "path": "testing"},
+    }, "it: should adopt the monitor name for the child node name"

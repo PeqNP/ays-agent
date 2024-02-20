@@ -29,8 +29,7 @@ setup(
         "requests>=2.31.0",
         "rich>=13.7.0",
         "typer>=0.9.0",
-        # urllib3 v2 not supported
-        "urllib3==1.26.18",
+        "urllib3>=1.26.18,<2",
         "uvicorn>=0.18.3"
     ],
     classifiers=[

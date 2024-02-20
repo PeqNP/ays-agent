@@ -76,11 +76,13 @@ class CLIOptions(object):
         )
 
     def setv(self, name, arg) -> None:
+        """ Sets the value for Self property `name` from `arg` values. """
         val = arg.get(name, None)
         if val:
             self.__dict__[name] = val
 
     def merge(self, **kwargs) -> None:
+        """ Merge existing options with options provided from CLI. """
         self.cli_options = CLIOptions(**kwargs)
 
         keys = list(self.__dict__.keys())
@@ -91,31 +93,35 @@ class CLIOptions(object):
         for key in keys:
             self.setv(key, kwargs)
 
-    def get_request(self) -> None:
-        # TODO: Raise exception if options are invalid
-        if not self.org_secret:
-            raise AgentException("'org_secret' must be provided")
-        if not self.parent:
-            raise AgentException("'parent' must be provided")
-        if not self.monitor_name:
-            raise AgentException("'monitor_name' must be provided")
-        params = {
-            "org_secret": self.org_secret,
-            "parent": {"property": "path", "value": self.parent},
-            "relationship": {"type": "parent", "monitor_name": self.monitor_name},
-        }
-        if self.value:
-            params["value"] = get_value(self.value_name, self.value, self.value_threshold)
-        return self.server, params
-
     def save(self) -> None:
         if not self.cli_options:
             raise AgentException("No CLI options provided to save.")
         # TODO: Save provided CLI options to disk
 
+def get_agent_payload(options) -> None:
+    """ Returns a request that represents an `AgentPayload`. """
+    if not options.org_secret:
+        raise AgentException("'org_secret' must be provided")
+    if not options.parent:
+        raise AgentException("'parent' must be provided")
+    if not options.monitor_name:
+        raise AgentException("'monitor_name' must be provided")
+    params = {
+        "org_secret": options.org_secret,
+        "parent": {"property": "path", "value": options.parent},
+        "relationship": {"type": "parent", "monitor_name": options.monitor_name},
+    }
+    if options.value:
+        params["value"] = get_value(options.value_name, options.value, options.value_threshold)
+    elif options.values:
+        params["values"] = get_values(options.values, options.value_names, options.value_thresholds)
+    return options.server, params
+
+
 AVAIL_THRESH_LEVELS = ["warning", "error", "critical"]
 
-def get_value(name, value, threshold):
+def get_value(name: Union[str, None], value: str, threshold: Union[str, None]) -> dict:
+    """ Returns a dict value that represents an `AgentValue`. """
     value = {
         "name": name or "value",
         "value": float(value),
@@ -125,7 +131,15 @@ def get_value(name, value, threshold):
         value.pop("threshold", None)
     return value
 
-def get_threshold_level(level_parts):
+def get_values(names: Union[str, None], values: str, thresholds: Union[str, None]) -> List[dict]:
+    """ Returns an array of dict values that represent an `AgentValue`. """
+    pass
+
+def get_threshold_level(level_parts: List[str]) -> str:
+    """ Returns a threshold value given threshold parts.
+
+    The first part is ignored. The second part is the threshold value.
+    """
     if len(level_parts) > 1:
         level = level_parts[1]
         if level not in AVAIL_THRESH_LEVELS:
@@ -134,7 +148,8 @@ def get_threshold_level(level_parts):
         level = "critical"
     return level
 
-def get_threshold(thresh):
+def get_threshold(thresh: str) -> dict:
+    """ Returns a dict that represents an `AgentThreshold`. """
     if not thresh:
         return None
     # Apparently the `click` / `typer` library do not remove quotes around values

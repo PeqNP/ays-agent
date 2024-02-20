@@ -121,3 +121,27 @@ def test_send_value(p_send_request):
     args["value_threshold"] = "34-o40"
     with pytest.raises(ValueError):
         cli.main(**args)
+
+@patch("ays_agent.cli.send_request")
+@patch("ays_agent.cli.get_hostname", patch_string)
+def test_send_values(p_send_request):
+    args = {
+        "org_secret": "aaa",
+        "parent": "com.unittest.values",
+        "values": "4.1,5.0,7.7",
+        "value_names": "cpu, ram,hdd"
+        "value_thresholds": "<1.3,>8.7:error,"
+    }
+
+    cli.main(**args)
+    call_args, _ = p_send_request.call_args
+    assert args[1] == {
+        "org_secret": "aaa",
+        "parent": {"property": "path", "value": "com.unittest.values"},
+        "relationship": {"type": "parent", "monitor_name": "testing"},
+        "values": [
+            {"value": 4.1, "name": "cpu", "threshold": {"below": 1.3, "level": "critical"}},
+            {"value": 5.0, "name": "ram", "threshold": {"above": 8.7, "level": "error"}},
+            {"value": 7.7, "name": "hdd"}
+        ]
+    }, "it: should send correct values"

@@ -16,7 +16,7 @@ from typing import Optional
 from typing_extensions import Annotated
 from pathlib import Path
 
-from ays_agent import get_name, get_version, CLIOptions
+from ays_agent import get_agent_payload, get_name, get_version, CLIOptions
 
 class NodeType(str, Enum):
     machine = "machine"
@@ -201,7 +201,7 @@ def main(
 
     # Ensure options are valid. This must happen regardless if CLI options are
     # provided or not as the user may write invalid config to the config file.
-    server, msg = options.get_request()
+    server, msg = get_agent_payload(options)
 
     # NOTE: Options must be checked before they are written to config.
     if write_config:

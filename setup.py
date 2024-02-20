@@ -24,6 +24,7 @@ setup(
         "click>=7.1.2",
         "fastapi>=0.109.1",
         "fastapi-utils>=0.2.1",
+        "psutil>=5.9.5",
         "PyYaml>=6.0",
         "requests>=2.31.0",
         "rich>=13.7.0",

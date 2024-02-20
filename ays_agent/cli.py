@@ -7,6 +7,7 @@
 #
 
 import typer
+import requests
 
 from enum import Enum
 from rich import print
@@ -183,7 +184,7 @@ def main(
     )
     # Ensure options are valid. This must happen regardless if CLI options are
     # provided or not as the user may write invalid config to the config file.
-    options.check()
+    server, msg = options.get_request()
 
     # NOTE: Options must be checked before they are written to config.
     if write_config:
@@ -192,4 +193,14 @@ def main(
         raise typer.Exit()
 
     # TODO: Emit action if --dry-run provided
-    # TODO: Execute action
+    if dry_run:
+        print(f"Server: [green]{server}[/green]")
+        print(msg)
+    else:
+        resp = requests.request("POST", server, json=msg)
+        if resp.status_code != 204:
+            print("Failed to make request to @ys server")
+            print(resp)
+            typer.Exit(1)
+        else:
+            typer.Exit()

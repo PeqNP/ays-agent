@@ -76,9 +76,9 @@ class CLIOptions(object):
         self.cli_options = CLIOptions(**kwargs)
         # TODO: Merge these with options provided
 
-    def check(self) -> None:
+    def get_request(self) -> None:
         # TODO: Raise exception if options are invalid
-        pass
+        return self.server, {}
 
     def save(self) -> None:
         if not self.cli_options:

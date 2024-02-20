@@ -125,23 +125,54 @@ def test_send_value(p_send_request):
 @patch("ays_agent.cli.send_request")
 @patch("ays_agent.cli.get_hostname", patch_string)
 def test_send_values(p_send_request):
-    args = {
+    options = {
         "org_secret": "aaa",
         "parent": "com.unittest.values",
         "values": "4.1,5.0,7.7",
-        "value_names": "cpu, ram,hdd"
+        "value_names": "cpu, ram,hdd",
         "value_thresholds": "<1.3,>8.7:error,"
     }
 
-    cli.main(**args)
+    # describe: all value options provided; one threshold omitted; name has space
+    cli.main(**options)
     call_args, _ = p_send_request.call_args
-    assert args[1] == {
+    req, args = call_args
+    assert args == {
         "org_secret": "aaa",
         "parent": {"property": "path", "value": "com.unittest.values"},
         "relationship": {"type": "parent", "monitor_name": "testing"},
         "values": [
             {"value": 4.1, "name": "cpu", "threshold": {"below": 1.3, "level": "critical"}},
             {"value": 5.0, "name": "ram", "threshold": {"above": 8.7, "level": "error"}},
+            {"value": 7.7, "name": "hdd"}
+        ]
+    }, "it: should send correct values"
+
+    # describe: invalid number of names
+    options["value_names"] = "cpu,ram"
+    with pytest.raises(AgentException, match=r"^The number of names \(2\) must match the number of values \(3\) provided$"):
+        cli.main(**options)
+
+    # describe: invalid number of thresholds
+    options["value_names"] = "cpu,ram,hdd"
+    options["value_thresholds"] = "<1.3,>8.7"
+    with pytest.raises(AgentException, match=r"^The number of thresholds \(2\) must match the number of values \(3\) provided$"):
+        cli.main(**options)
+
+    # describe: value options provided; name missing
+    options.pop("value_thresholds")
+    options["value_names"] = "cpu,,hdd"
+    cli.main(**options)
+    call_args, _ = p_send_request.call_args
+    req, args = call_args
+    assert args == {
+        "org_secret": "aaa",
+        "parent": {"property": "path", "value": "com.unittest.values"},
+        "relationship": {"type": "parent", "monitor_name": "testing"},
+        "values": [
+            {"value": 4.1, "name": "cpu"},
+            # it: should set default value to "value" + index
+            {"value": 5.0, "name": "value1"},
             {"value": 7.7, "name": "hdd"}
         ]
     }, "it: should send correct values"

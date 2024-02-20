@@ -1,7 +1,7 @@
 import logging
 import re
 
-from typing import List
+from typing import List, Union
 from typing_extensions import Optional, Self
 
 def get_name() -> str:
@@ -114,16 +114,16 @@ def get_agent_payload(options) -> None:
     if options.value:
         params["value"] = get_value(options.value_name, options.value, options.value_threshold)
     elif options.values:
-        params["values"] = get_values(options.values, options.value_names, options.value_thresholds)
+        params["values"] = get_values(options.value_names, options.values, options.value_thresholds)
     return options.server, params
 
 
 AVAIL_THRESH_LEVELS = ["warning", "error", "critical"]
 
-def get_value(name: Union[str, None], value: str, threshold: Union[str, None]) -> dict:
+def get_value(name: Union[str, None], value: str, threshold: Union[str, None], index: Optional[int] = None) -> dict:
     """ Returns a dict value that represents an `AgentValue`. """
     value = {
-        "name": name or "value",
+        "name": name or (index is None and "value" or f"value{index}"),
         "value": float(value),
         "threshold": get_threshold(threshold)
     }
@@ -133,7 +133,23 @@ def get_value(name: Union[str, None], value: str, threshold: Union[str, None]) -
 
 def get_values(names: Union[str, None], values: str, thresholds: Union[str, None]) -> List[dict]:
     """ Returns an array of dict values that represent an `AgentValue`. """
-    pass
+    def strip_v(v):
+        if v:
+            return list(map(lambda x: x.strip(), v.split(",")))
+        else:
+            return [None] * len(values)
+    values = strip_v(values)
+    names = strip_v(names)
+    if len(names) != len(values):
+        raise AgentException(f"The number of names ({len(names)}) must match the number of values ({len(values)}) provided")
+    thresholds = strip_v(thresholds)
+    if len(thresholds) != len(values):
+        raise AgentException(f"The number of thresholds ({len(thresholds)}) must match the number of values ({len(values)}) provided")
+    r_values = []
+    for idx, v in enumerate(values):
+        v = get_value(names[idx], v, thresholds[idx], idx)
+        r_values.append(v)
+    return r_values
 
 def get_threshold_level(level_parts: List[str]) -> str:
     """ Returns a threshold value given threshold parts.

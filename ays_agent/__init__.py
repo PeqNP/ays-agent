@@ -125,20 +125,49 @@ def get_value(name, value, threshold):
         value.pop("threshold", None)
     return value
 
+def get_threshold_level(level_parts):
+    if len(level_parts) > 1:
+        level = level_parts[1]
+        if level not in AVAIL_THRESH_LEVELS:
+            raise AgentException(f"Invalid threshold level ({level}). Available options are ({', '.join(AVAIL_THRESH_LEVELS)})")
+    else:
+        level = "critical"
+    return level
+
 def get_threshold(thresh):
     if not thresh:
         return None
     # Apparently the `click` / `typer` library do not remove quotes around values
     thresh = thresh.lower().strip("'").strip('"')
-    if ">" in thresh:
-        level_parts = thresh.split(":")
-        if len(level_parts) > 1:
-            level = level_parts[1]
-        else:
-            level = "critical"
-            if level not in AVAIL_THRESH_LEVELS:
-                raise AgentException(f"Invalid value threshold ({level}). Available options are ({', '.join(AVAIL_THRESH_LEVELS)})")
-        numeric_part = re.search(r'\d+(\.\d+)?', thresh).group()
-        # NOTE: `float` will raise `ValueError` if it's not valid
-        return {"above": float(numeric_part), "level": level}
 
+    # Outside threshold range
+    if "-" in thresh:
+        if ":" in thresh:
+            parts = thresh.split(":")
+        else:
+            parts = [thresh]
+        _min, _max = parts[0].split("-")
+        level = get_threshold_level(parts)
+        return {"outside": {"min": float(_min), "max": float(_max)}, "level": level}
+
+    # Threshold type
+    if thresh.startswith(">"):
+        thresh_type = "above"
+    elif thresh.startswith("<"):
+        thresh_type = "below"
+    elif thresh.startswith("e"):
+        thresh_type = "equal"
+    elif thresh.startswith("ne"):
+        thresh_type = "nequal"
+    else:
+        raise AgentException(f"Invalid threshold type for value ({thresh})")
+
+    # Threshold level
+    level_parts = thresh.split(":")
+    level = get_threshold_level(level_parts)
+
+    # Threshold value
+    numeric_part = re.search(r'\d+(\.\d+)?', thresh).group()
+
+    # NOTE: `float` will raise `ValueError` if it's not valid
+    return {thresh_type: float(numeric_part), "level": level}

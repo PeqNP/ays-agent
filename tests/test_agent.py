@@ -22,6 +22,11 @@ def run_command(command, call):
     args, _ = call.call_args
     return result.exit_code, args
 
+def call_cli(options, call):
+    cli.main(**options)
+    args, _ = call.call_args
+    return args
+
 @patch("ays_agent.cli.send_request")
 @patch("ays_agent.cli.get_hostname", patch_string)
 def test_send_value(p_send_request):
@@ -134,9 +139,7 @@ def test_send_values(p_send_request):
     }
 
     # describe: all value options provided; one threshold omitted; name has space
-    cli.main(**options)
-    call_args, _ = p_send_request.call_args
-    req, args = call_args
+    req, args = call_cli(options, p_send_request)
     assert args == {
         "org_secret": "aaa",
         "parent": {"property": "path", "value": "com.unittest.values"},
@@ -162,9 +165,7 @@ def test_send_values(p_send_request):
     # describe: value options provided; name missing
     options.pop("value_thresholds")
     options["value_names"] = "cpu,,hdd"
-    cli.main(**options)
-    call_args, _ = p_send_request.call_args
-    req, args = call_args
+    req, args = call_cli(options, p_send_request)
     assert args == {
         "org_secret": "aaa",
         "parent": {"property": "path", "value": "com.unittest.values"},
@@ -176,3 +177,45 @@ def test_send_values(p_send_request):
             {"value": 7.7, "name": "hdd"}
         ]
     }, "it: should send correct values"
+
+@patch("ays_agent.cli.send_request")
+@patch("ays_agent.cli.get_hostname", patch_string)
+def test_send_status(p_send_request):
+    options = {
+        "org_secret": "aaa",
+        "parent": "com.unittest.values",
+        "status_message": "This is only a test",
+    }
+
+    # describe: provide status; no state provided
+    _, args = call_cli(options, p_send_request)
+    assert args == {
+        "org_secret": "aaa",
+        "parent": {"property": "path", "value": "com.unittest.values"},
+        "relationship": {"type": "parent", "monitor_name": "testing"},
+        "status": {
+            "message": "This is only a test",
+            # it: should return correct default value
+            "state": "critical"
+        }
+    }, "it: should send correct values"
+
+    # describe: provide status state; no status message
+    options.pop("status_message")
+    options["status_state"] = "warning"
+    _, args = call_cli(options, p_send_request)
+    assert args == {
+        "org_secret": "aaa",
+        "parent": {"property": "path", "value": "com.unittest.values"},
+        "relationship": {"type": "parent", "monitor_name": "testing"},
+        "status": {
+            # it: should return correct default value
+            "message": "",
+            "state": "warning"
+        }
+    }, "it: should send correct values"
+
+    # describe: provide invalid state
+    options["status_state"] = "super"
+    with pytest.raises(AgentException, match=r"^Invalid status state \(super\). Available options are \(healthy, warning, error, critical\)$"):
+        cli.main(**options)

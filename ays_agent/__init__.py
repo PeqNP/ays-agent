@@ -4,6 +4,9 @@ import re
 from typing import List, Union
 from typing_extensions import Optional, Self
 
+AVAIL_THRESH_LEVELS = ["warning", "error", "critical"]
+AVAIL_STATUS_STATES = ["healthy", "warning", "error", "critical"]
+
 def get_name() -> str:
     return "ays-agent"
 
@@ -98,6 +101,8 @@ class CLIOptions(object):
             raise AgentException("No CLI options provided to save.")
         # TODO: Save provided CLI options to disk
 
+# Public API
+
 def get_agent_payload(options) -> None:
     """ Returns a request that represents an `AgentPayload`. """
     if not options.org_secret:
@@ -115,10 +120,26 @@ def get_agent_payload(options) -> None:
         params["value"] = get_value(options.value_name, options.value, options.value_threshold)
     elif options.values:
         params["values"] = get_values(options.value_names, options.values, options.value_thresholds)
+    elif options.status_message or options.status_state:
+        params["status"] = get_status(options.status_message, options.status_state)
     return options.server, params
 
+# Private API
 
-AVAIL_THRESH_LEVELS = ["warning", "error", "critical"]
+def get_status_state(state) -> str:
+    """ Returns provided status state or `critical` if not provided. """
+    if state and state not in AVAIL_STATUS_STATES:
+        raise AgentException(f"Invalid status state ({state}). Available options are ({', '.join(AVAIL_STATUS_STATES)})")
+    elif not state:
+        state = "critical"
+    return state
+
+def get_status(message, state) -> dict:
+    """ Returns a dict that represents an `AgentStatus`. """
+    return {
+        "message": message or "",
+        "state": get_status_state(state)
+    }
 
 def get_value(name: Union[str, None], value: str, threshold: Union[str, None], index: Optional[int] = None) -> dict:
     """ Returns a dict value that represents an `AgentValue`. """

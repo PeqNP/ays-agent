@@ -127,6 +127,13 @@ def get_agent_payload(options) -> None:
         params["relationship"] = {"type": "child", "monitor_name": options.monitor_name, "path": options.monitor_name}
     else:
         params["relationship"] = {"type": "parent", "monitor_name": options.monitor_name}
+    if options.managed is not None:
+        params["managed"] = options.managed
+    if options.heartbeat_timeout:
+        params["heartbeat"] = {
+            "timeout": int(options.heartbeat_timeout),
+            "level": get_heartbeat_level(options.heartbeat_level)
+        }
     if options.node_type and (options.child or options.create_child):
         params["type"] = get_agent_type(options.node_type.lower())
     if options.value:
@@ -138,6 +145,15 @@ def get_agent_payload(options) -> None:
     return options.server, params
 
 # Private API
+
+def get_heartbeat_level(level: str) -> str:
+    """ Returns heartbeat level. Returns default if not provided. """
+    if level and level not in AVAIL_THRESH_LEVELS:
+        raise AgentException(f"Invalid heartbeat level ({level}). Available options are ({', '.join(AVAIL_THRESH_LEVELS)})")
+    elif not level:
+        level = "critical"
+    return level
+
 
 def get_agent_type(agent_type: str) -> str:
     """ Returns agent type, if valid. """

@@ -99,8 +99,9 @@ def main(
         show_default=False
     )] = None,
     managed: Annotated[bool, typer.Option(
-        help="Agent is responsible for managing its own configuration."
-    )] = True,
+        help="Agent is responsible for managing its own configuration.",
+        show_default=False
+    )] = None,
 
     heartbeat_timeout: Annotated[int, typer.Option(
         help="The timeout, in seconds, in which the agent will be considered unhealthy if it doesn't report within specified time.",

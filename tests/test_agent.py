@@ -300,3 +300,68 @@ def test_agent_type(p_send_request):
         "parent": {"property": "path", "value": "com.unittest.agent_type"},
         "relationship": {"type": "parent", "monitor_name": "testing"}
     }, "it: should ignore the node type"
+
+@patch("ays_agent.cli.send_request")
+@patch("ays_agent.cli.get_hostname", patch_string)
+def test_managed_node(p_send_request):
+    options = {
+        "org_secret": "aaa",
+        "parent": "com.unittest.agent_type",
+        "create_child": True,
+        "managed": True
+    }
+
+    # describe: provide managed
+    _, args = call_cli(options, p_send_request)
+    assert args == {
+        "org_secret": "aaa",
+        "parent": {"property": "path", "value": "com.unittest.agent_type"},
+        "relationship": {"type": "child", "monitor_name": "testing", "path": "testing"},
+        "managed": True
+    }, "it: should be a managed node"
+
+@patch("ays_agent.cli.send_request")
+@patch("ays_agent.cli.get_hostname", patch_string)
+def test_heartbeat(p_send_request):
+    options = {
+        "org_secret": "aaa",
+        "parent": "com.unittest.heartbeat",
+        "heartbeat_timeout": 30
+    }
+
+    # describe: provide heartbeat config; no level provided
+    _, args = call_cli(options, p_send_request)
+    assert args == {
+        "org_secret": "aaa",
+        "parent": {"property": "path", "value": "com.unittest.heartbeat"},
+        "relationship": {"type": "parent", "monitor_name": "testing"},
+        "heartbeat": {
+            "timeout": 30,
+            # it: should set to default value
+            "level": "critical"
+        }
+    }, "it: should return heartbeat config"
+
+    # describe: provide heartbeat config; level provided
+    options["heartbeat_level"] = "warning"
+    _, args = call_cli(options, p_send_request)
+    assert args == {
+        "org_secret": "aaa",
+        "parent": {"property": "path", "value": "com.unittest.heartbeat"},
+        "relationship": {"type": "parent", "monitor_name": "testing"},
+        "heartbeat": {
+            "timeout": 30,
+            "level": "warning"
+        }
+    }, "it: should set heartbeat level"
+
+    # describe: provide invalid heartbeat timeout
+    options["heartbeat_timeout"] = "o30"
+    with pytest.raises(ValueError):
+        cli.main(**options)
+
+    # describe: provide invalid heartbeat level
+    options["heartbeat_timeout"] = 30
+    options["heartbeat_level"] = "incorrect"
+    with pytest.raises(AgentException, match=r"^Invalid heartbeat level \(incorrect\). Available options are \(warning, error, critical\)$"):
+        cli.main(**options)

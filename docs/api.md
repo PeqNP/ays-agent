@@ -106,7 +106,7 @@ Use either `child` or `create-child`. Do not use both.
 
 ## `--node-type` (optional)
 
-The type of node to create when a child is created.
+The type of (agent) node to create when a child node is created. This value is ignored if a child is not created.
 
 **Default:** `machine`
 

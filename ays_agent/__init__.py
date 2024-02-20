@@ -6,6 +6,7 @@ from typing_extensions import Optional, Self
 
 AVAIL_THRESH_LEVELS = ["warning", "error", "critical"]
 AVAIL_STATUS_STATES = ["healthy", "warning", "error", "critical"]
+AVAIL_AGENT_TYPES = ["machine", "service", "vendor"]
 
 NODE_RESERVED_NAMES = ["measurements", "c", "xff"]
 NODE_VALID_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789_-"
@@ -126,6 +127,8 @@ def get_agent_payload(options) -> None:
         params["relationship"] = {"type": "child", "monitor_name": options.monitor_name, "path": options.monitor_name}
     else:
         params["relationship"] = {"type": "parent", "monitor_name": options.monitor_name}
+    if options.node_type and (options.child or options.create_child):
+        params["type"] = get_agent_type(options.node_type.lower())
     if options.value:
         params["value"] = get_value(options.value_name, options.value, options.value_threshold)
     elif options.values:
@@ -135,6 +138,12 @@ def get_agent_payload(options) -> None:
     return options.server, params
 
 # Private API
+
+def get_agent_type(agent_type: str) -> str:
+    """ Returns agent type, if valid. """
+    if agent_type not in AVAIL_AGENT_TYPES:
+        raise AgentException(f"Invalid agent type ({agent_type}). Available options are ({', '.join(AVAIL_AGENT_TYPES)})")
+    return agent_type
 
 def get_formatted_node_name(name: str) -> str:
     """ Standardize a node name to follow @ys node name conventions.

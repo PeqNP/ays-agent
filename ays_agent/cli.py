@@ -95,8 +95,9 @@ def main(
         help="Create a child node that lives under the parent's node path. The name of this child node will use the same name as the monitor."
     )] = False,
     node_type: Annotated[NodeType, typer.Option(
-        help="The type of node to create when a child is created. Ignored when no child node is created."
-    )] = NodeType.machine,
+        help="The type of node to create when a child is created. Ignored when no child node is created.",
+        show_default=False
+    )] = None,
     managed: Annotated[bool, typer.Option(
         help="Agent is responsible for managing its own configuration."
     )] = True,

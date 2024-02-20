@@ -266,3 +266,37 @@ def test_create_child(p_send_request):
         "parent": {"property": "path", "value": "com.unittest.create_child"},
         "relationship": {"type": "child", "monitor_name": "testing", "path": "testing"},
     }, "it: should adopt the monitor name for the child node name"
+
+@patch("ays_agent.cli.send_request")
+@patch("ays_agent.cli.get_hostname", patch_string)
+def test_agent_type(p_send_request):
+    options = {
+        "org_secret": "aaa",
+        "parent": "com.unittest.agent_type",
+        "create_child": True,
+        "node_type": "machine"
+    }
+
+    # describe: provide a valid node type
+    _, args = call_cli(options, p_send_request)
+    assert args == {
+        "org_secret": "aaa",
+        "parent": {"property": "path", "value": "com.unittest.agent_type"},
+        "relationship": {"type": "child", "monitor_name": "testing", "path": "testing"},
+        "type": "machine"
+    }, "it: should adopt the monitor name for the child node name"
+
+    # describe: provide invalid node type
+    options["node_type"] = "incorrect"
+    with pytest.raises(AgentException, match=r"^Invalid agent type \(incorrect\). Available options are \(machine, service, vendor\)$"):
+        cli.main(**options)
+
+    # describe: node type provided; not creating a child
+    options["node_type"] = "machine"
+    options.pop("create_child")
+    _, args = call_cli(options, p_send_request)
+    assert args == {
+        "org_secret": "aaa",
+        "parent": {"property": "path", "value": "com.unittest.agent_type"},
+        "relationship": {"type": "parent", "monitor_name": "testing"}
+    }, "it: should ignore the node type"

@@ -15,14 +15,18 @@ def test_version():
 def patch_string():
     return "testing"
 
+def run_command(command, call):
+    result = runner.invoke(cli.app, command)
+    args, _ = call.call_args
+    return result.exit_code, args
+
 @patch("ays_agent.cli.send_request")
 @patch("ays_agent.cli.get_hostname", patch_string)
 def test_send_value(p_send_request):
     req_options = ["--org-secret=aaa", "--parent=com.unittest.send"]
     # describe: send value; send all value options
-    result = runner.invoke(cli.app, req_options + ["--value=5", "--value-name=disk", "--value-threshold=\">10:warning\""])
-    assert result.exit_code == 0
-    args, _ = p_send_request.call_args
+    code, args = run_command(req_options + ["--value=5", "--value-name=disk", "--value-threshold=\">10:warning\""], p_send_request)
+    assert code == 0
     assert args[0] == cli.get_default_server()
     assert args[1] == {
         "org_secret": "aaa",
@@ -32,9 +36,8 @@ def test_send_value(p_send_request):
     }, "it: should send provided values"
 
     # describe: send only value
-    result = runner.invoke(cli.app, req_options + ["--value=5"])
-    args, _ = p_send_request.call_args
-    assert result.exit_code == 0
+    code, args = run_command(req_options + ["--value=5"], p_send_request)
+    assert code == 0
     assert args[1] == {
         "org_secret": "aaa",
         "parent": {"property": "path", "value": "com.unittest.send"},

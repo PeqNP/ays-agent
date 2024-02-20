@@ -195,6 +195,10 @@ def main(
         monitor_file=monitor_file,
         monitor_program=monitor_program
     )
+
+    if not monitor_name:
+        options.monitor_name = get_hostname()
+
     # Ensure options are valid. This must happen regardless if CLI options are
     # provided or not as the user may write invalid config to the config file.
     server, msg = options.get_request()

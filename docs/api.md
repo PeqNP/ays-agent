@@ -80,7 +80,7 @@ Again, if you wish to manually report `--value`, `--values`, `--status`, on your
 
 ## `--parent`
 
-The parent node path this agent will relate to.
+The parent node path this agent will communicate with.
 
 ## `--monitor-name` (optional)
 
@@ -174,28 +174,30 @@ $ --value-threshold="<20"
 
 Please replace `20` with your own value. All other examples below should have their values replaced with the respective value you wish to use.
 
-Trigger when value is above threshold of `90`:
+Trigger a `critical` transition when `value` is above threshold of `90`:
 
 ```bash
-$ --value-threshold=">90"
+$ --value-threshold=">90:critical"
 ```
 
-Trigger when value is equal to `1`:
+Trigger a `critical` transition when `value` is equal to `1`:
 
 ```bash
 $ --value-threshold="e1"
 ```
 
-Trigger when value is not equal to `1`:
+**Default:** `critical`
+
+Trigger `warning` transition, when `value` is not equal to `1`:
 
 ```bash
-$ --value-threshold="ne1"
+$ --value-threshold="ne1:warning"
 ```
 
-Trigger when value falls outside of the range of `20` and `90`:
+Trigger `error` transition when `value` falls outside of the range of `20` and `90`:
 
 ```bash
-$ --value-threshold="20-90"
+$ --value-threshold="20-90:error"
 ```
 
 ### Multiple values (optional)
@@ -227,12 +229,12 @@ Define thresholds for multiple values in comma delimited list. Please refer to `
 This defines three thresholds for the above three values:
 
 ```bash
-$ --value-thresholds="<20,>90,20-90"
+$ --value-thresholds="<20:error,>90,20-90:warning"
 ```
 
-- The first value (`45` - `cpu`) will trigger if the value is below `20`.
-- The second value (`50` - `hdd`) will trigger if the value is above `90`.
-- The third value (`60` - `ram`) will trigger when the value falls outside of the range of `20` and `90`.
+- The first value (`45` - `cpu`) will trigger an `error` if the `value` is below `20`.
+- The second value (`50` - `hdd`) will trigger a `critical` transition if the `value` is above `90`.
+- The third value (`60` - `ram`) will trigger a `warning` if the `value` falls outside the range of `20` and `90`.
 
 ### Status Message (optional)
 
@@ -298,12 +300,12 @@ ram,40,20-90
 
 Please note that the threshold configuration is optional for each value.
 
-## `--monitor-program`
+## `--execute`
 
-Execute a CLI program to derive value(s) to report on.
+Execute a CLI app, script, etc. to derive a value to report on.
 
 ```bash
-$ agent-sensor --monitor-program=/path/to/script --value-threshold="ne0"
+$ agent-sensor --execute=/path/to/script --value-threshold="ne0"
 ```
 
 This will execute the script at `/path/to/script`, which will return a single value of either `1` or `0`, and trigger an alert if the value returned does not equal `0`.

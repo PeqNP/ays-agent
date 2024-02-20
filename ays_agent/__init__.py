@@ -1,3 +1,5 @@
+import re
+
 from typing import List
 from typing_extensions import Optional, Self
 
@@ -64,7 +66,7 @@ class CLIOptions(object):
 
     @staticmethod
     def load() -> Self:
-        # TODO: Load from file, create instance of CLIOptions
+        # TODO: Load from file or create instance CLIOptions with empty values
         return CLIOptions(
             org_secret="",
             server="",
@@ -80,13 +82,55 @@ class CLIOptions(object):
     def merge(self, **kwargs) -> None:
         self.cli_options = CLIOptions(**kwargs)
 
-        self.setv("server", kwargs)
+        import logging
+        keys = list(self.__dict__.keys())
+        try:
+            keys.remove("cli_options")
+        except:
+            pass
+        for key in keys:
+            self.setv(key, kwargs)
 
     def get_request(self) -> None:
         # TODO: Raise exception if options are invalid
-        return self.server, {}
+        if not self.org_secret:
+            raise AgentException("'org_secret' must be provided")
+        if not self.parent:
+            raise AgentException("'parent' must be provided")
+        if not self.monitor_name:
+            raise AgentException("'monitor_name' must be provided")
+        params = {
+            "org_secret": self.org_secret,
+            "parent": {"property": "path", "value": self.parent},
+            "relationship": {"type": "parent", "monitor_name": self.monitor_name},
+        }
+        if self.value:
+            params["value"] = {
+                "name": self.value_name,
+                "value": float(self.value),
+                "threshold": get_threshold(self.value_threshold)
+            }
+        return self.server, params
 
     def save(self) -> None:
         if not self.cli_options:
             raise AgentException("No CLI options provided to save.")
         # TODO: Save provided CLI options to disk
+
+AVAIL_THRESH_LEVELS = ["warning", "error", "critical"]
+
+def get_threshold(thresh):
+    # Apparently the `click` / `typer` library do not remove quotes around values
+    thresh = thresh.lower().strip("'").strip('"')
+    if ">" in thresh:
+        level_parts = thresh.split(":")
+        if len(level_parts) > 1:
+            level = level_parts[1]
+        else:
+            level = "critical"
+            if level not in AVAIL_THRESH_LEVELS:
+                raise AgentException(f"Invalid value threshold ({level}). Available options are ({', '.join(AVAIL_THRESH_LEVELS)})")
+        numeric_part = re.search(r'\d+(\.\d+)?', thresh).group()
+        # NOTE: `float` will raise `ValueError` if it's not valid
+        return {"above": float(numeric_part), "level": level}
+

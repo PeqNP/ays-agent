@@ -19,7 +19,7 @@ def patch_string():
 @patch("ays_agent.cli.get_hostname", patch_string)
 def test_send_value(p_send_request):
     # describe: send value; send all value options
-    result = runner.invoke(cli.app, ["--org-secret=aaa", "--parent=com.unittest.send", "--value=5", "--value-name=disk", "--value-threshold='>10'"])
+    result = runner.invoke(cli.app, ["--org-secret=aaa", "--parent=com.unittest.send", "--value=5", "--value-name=disk", "--value-threshold=\">10:warning\""])
     assert result.exit_code == 0
     args, _ = p_send_request.call_args
     assert args[0] == cli.get_default_server()
@@ -27,8 +27,14 @@ def test_send_value(p_send_request):
         "org_secret": "aaa",
         "parent": {"property": "path", "value": "com.unittest.send"},
         "relationship": {"type": "parent", "monitor_name": "testing"},
-        "value": {"value": 5, "name": "disk", "threshold": {"above": 10, "level": "critical"}}
+        "value": {"value": 5.0, "name": "disk", "threshold": {"above": 10.0, "level": "warning"}}
     }, "it: should send provided values"
 
     # describe: send value; no values provided
     # it: should return default values
+    # describe: threshold is above
+    # describe: threshold is equal
+    # describe: threshold is not equal
+    # describe: threshold is range
+
+    # describe: provide invalid threshold level

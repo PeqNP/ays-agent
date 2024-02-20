@@ -17,7 +17,7 @@ from typing import Optional
 from typing_extensions import Annotated
 from pathlib import Path
 
-from ays_agent import get_agent_payload, get_config_path, get_name, get_version, CLIOptions, load_options, save_options
+from ays_agent import get_agent_payload, get_config_path, get_name, get_version, CLIOptions, load_options, save_options, strip_v, AgentException
 
 class NodeType(str, Enum):
     machine = "machine"
@@ -56,7 +56,7 @@ def _version_callback(value: bool) -> None:
         raise typer.Exit()
 
 def send_request(server, json):
-    resp = requests.request("POST", server, json=msg)
+    resp = requests.request("POST", server, json=json)
     if resp.status_code != 204:
         print("Failed to make request to @ys server")
         print(resp)
@@ -149,8 +149,8 @@ def main(
     )] = None,
 
     # Services
-    monitor_resources: Annotated[MonitorResource, typer.Option(
-        help="Monitor system resources.",
+    monitor_resources: Annotated[str, typer.Option(
+        help="Monitor system resources. Available options: {list(MonitorResource.__members__}",
         show_default=False
     )] = None,
 
@@ -212,10 +212,29 @@ def main(
         print("[green]Saved configuration to disk successfully.[/green]")
         raise typer.Exit()
 
-    # TODO: Emit action if --dry-run provided
     if dry_run:
+        if monitor_resources:
+            print(f"Monitor resources: {monitor_resources}")
+        elif monitor_program:
+            print(f"Monitor program: {monitoring_program}")
+        elif monitor_file:
+            print(f"Monitor file: {monitor_file}")
         print(f"Server: [green]{server}[/green]")
         print(msg)
         raise typer.Exit()
+
+    if monitor_resources:
+        resources = strip_v(monitor_resources)
+        for res in resources:
+            if res not in MonitorResource.__members__:
+                raise AgentException(f"Invalid monitor resource ({res}). Available options are ({', '.join(MonitorResource.__members__)}).")
+        options = monitor_resources.split(",")
+        # TODO: Monitor resources
+    elif monitor_program:
+        # TODO: Execute program
+        pass
+    elif monitor_file:
+        # TODO: Monitor file
+        pass
     else:
         send_request(server, msg)

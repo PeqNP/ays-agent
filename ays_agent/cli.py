@@ -10,8 +10,13 @@ import logging
 import typer
 import requests
 import socket
+import time
+import uvicorn
 
 from enum import Enum
+from fastapi import FastAPI
+from fastapi.responses import Response
+from fastapi_utils.tasks import repeat_every
 from rich import print
 from typing import Optional
 from typing_extensions import Annotated
@@ -64,6 +69,16 @@ def send_request(server, json):
     else:
         raise typer.Exit()
 
+# FastAPI Service
+
+fastapp = FastAPI()
+
+@fastapp.get("/test/")
+async def test():
+    return Response(status_code=204)
+
+# Typer app
+
 @app.callback()
 def main(
     version: Annotated[bool, typer.Option(
@@ -80,6 +95,9 @@ def main(
     interval: Annotated[int, typer.Option(
         help="Interval, in seconds, that the agent will report a value or status. This will make the agent act as a long-running service. If a monitor is used, and the interval is not provided, the default interval will be 5 minutes."
     )] = None,
+    port: Annotated[int, typer.Option(
+        help="The port the agent listens to when becoming a long running service."
+    )] = 9555,
     parent: Annotated[str, typer.Option(
         help="The parent node path this agent will relate to.",
         show_default=False
@@ -236,5 +254,12 @@ def main(
     elif monitor_file:
         # TODO: Monitor file
         pass
+    elif interval:
+        @fastapp.on_event("startup")
+        @repeat_every(seconds=interval)
+        async def run_forever() -> None:
+            send_request(server, msg)
+
+        uvicorn.run(fastapp, host="0.0.0.0", port=port)
     else:
         send_request(server, msg)

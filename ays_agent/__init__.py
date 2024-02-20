@@ -1,8 +1,15 @@
 import logging
+import os
 import re
 
 from typing import List, Union
 from typing_extensions import Optional, Self
+
+from yaml import load, dump, safe_load
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except:
+    from yaml import Loader, Dumper
 
 AVAIL_THRESH_LEVELS = ["warning", "error", "critical"]
 AVAIL_STATUS_STATES = ["healthy", "warning", "error", "critical"]
@@ -13,11 +20,35 @@ NODE_VALID_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789_-"
 NODE_VALID_FIRST_CHARS = "abcdefghijklmnopqrstuvwxyz"
 NODE_MAX_NAME_LENGTH = 30
 
+CONFIG_PATH = None
+
 def get_name() -> str:
     return "ays-agent"
 
 def get_version() -> str:
     return "1.0.0"
+
+def set_config_path(path: str) -> None:
+    """ Set the @ys configuration path.
+
+    Use only for testing.
+    """
+    global CONFIG_PATH
+    CONFIG_PATH = path
+
+def get_config_path():
+    global CONFIG_PATH
+    if CONFIG_PATH:
+        return CONFIG_PATH
+    home_path = os.path.expanduser("~")
+    path = os.path.join(home_path, ".ays-agent")
+    return path
+
+def write_yaml(fh, obj):
+    dump(obj, fh)
+
+def read_yaml(fh):
+    return load(fh, Loader=Loader)
 
 class AgentException(Exception):
     pass
@@ -74,40 +105,53 @@ class CLIOptions(object):
         # Options provided to the app from the CLI
         self.cli_options = None
 
-    @staticmethod
-    def load() -> Self:
-        # TODO: Load from file or create instance CLIOptions with empty values
-        return CLIOptions(
-            org_secret="",
-            server="",
-            parent="",
-            monitor_name=""
-        )
-
     def setv(self, name, arg) -> None:
         """ Sets the value for Self property `name` from `arg` values. """
         val = arg.get(name, None)
         if val:
             self.__dict__[name] = val
 
+    def get_options(self) -> dict:
+        """ Returns all options that can be saved. """
+        opts = self.__dict__.copy()
+        opts.pop("cli_options", None)
+        return opts
+
     def merge(self, **kwargs) -> None:
         """ Merge existing options with options provided from CLI. """
         self.cli_options = CLIOptions(**kwargs)
-
-        keys = list(self.__dict__.keys())
-        try:
-            keys.remove("cli_options")
-        except:
-            pass
+        keys = list(self.get_options().keys())
         for key in keys:
             self.setv(key, kwargs)
 
-    def save(self) -> None:
-        if not self.cli_options:
-            raise AgentException("No CLI options provided to save.")
-        # TODO: Save provided CLI options to disk
-
 # Public API
+
+def load_options(path: str) -> CLIOptions:
+    """ Load ays agent server options from config file.
+
+    Returns an options, if config file not found.
+    """
+    if os.path.isfile(path):
+        with open(path, "r") as fh:
+            opts = read_yaml(fh)
+        return CLIOptions(**opts)
+    return CLIOptions(
+        org_secret="",
+        server="",
+        parent="",
+        monitor_name=""
+    )
+
+def save_options(options: CLIOptions) -> None:
+    """ Save options to disk. """
+    path = get_config_path()
+    opts = options.get_options()
+    keys = list(opts.keys())
+    for key in keys:
+        if opts[key] is None:
+            del opts[key]
+    with open(path, "w") as fh:
+        write_yaml(fh, opts)
 
 def get_agent_payload(options) -> None:
     """ Returns a request that represents an `AgentPayload`. """

@@ -6,6 +6,7 @@
 # - [Rich](https://rich.readthedocs.io/en/stable/) - Display rich text to terminal
 #
 
+import logging
 import typer
 import requests
 import socket
@@ -16,7 +17,7 @@ from typing import Optional
 from typing_extensions import Annotated
 from pathlib import Path
 
-from ays_agent import get_agent_payload, get_name, get_version, CLIOptions
+from ays_agent import get_agent_payload, get_config_path, get_name, get_version, CLIOptions, load_options, save_options
 
 class NodeType(str, Enum):
     machine = "machine"
@@ -77,8 +78,8 @@ def main(
         help="Organization secret. Required to interact with the respective org system graph."
     )] = "",
     interval: Annotated[int, typer.Option(
-        help="Interval, in seconds, that the agent will report a value or status. This will make the agent act as a long-running service."
-    )] = 300,
+        help="Interval, in seconds, that the agent will report a value or status. This will make the agent act as a long-running service. If a monitor is used, and the interval is not provided, the default interval will be 5 minutes."
+    )] = None,
     parent: Annotated[str, typer.Option(
         help="The parent node path this agent will relate to.",
         show_default=False
@@ -171,7 +172,7 @@ def main(
     )] = False,
 ) -> None:
     # Load options from disk, if any
-    options = CLIOptions.load()
+    options = load_options(get_config_path())
     # Merge options provided
     options.merge(
         org_secret=org_secret,
@@ -207,7 +208,7 @@ def main(
 
     # NOTE: Options must be checked before they are written to config.
     if write_config:
-        options.save()
+        save_options(options)
         print("[green]Saved configuration to disk successfully.[/green]")
         raise typer.Exit()
 

@@ -1,11 +1,13 @@
 from .context import ays_agent
 
+import logging
+import os
 import pytest
 
 from typer.testing import CliRunner
 from unittest.mock import patch
 
-from ays_agent import get_name, get_version, cli, AgentException
+from ays_agent import set_config_path, get_config_path, get_name, get_version, cli, AgentException, load_options, CLIOptions
 
 runner = CliRunner()
 
@@ -17,8 +19,8 @@ def test_version():
 def patch_string():
     return "testing"
 
-def run_command(command, call):
-    result = runner.invoke(cli.app, command)
+def run_command(options, call):
+    result = runner.invoke(cli.app, options)
     args, _ = call.call_args
     return result.exit_code, args
 
@@ -27,10 +29,19 @@ def call_cli(options, call):
     args, _ = call.call_args
     return args
 
+def setup_config():
+    config_path = os.path.join(os.path.dirname(__file__), "ays-agent")
+    if os.path.isfile(config_path):
+        os.unlink(config_path)
+    set_config_path(config_path)
+
 @patch("ays_agent.cli.send_request")
 @patch("ays_agent.cli.get_hostname", patch_string)
 def test_send_value(p_send_request):
-    req_options = ["--org-secret=aaa", "--parent=com.unittest.send"]
+    req_options = [
+        "--org-secret=aaa",
+        "--parent=com.unittest.send"
+    ]
     # describe: send value; send all value options
     code, args = run_command(req_options + ["--value=5", "--value-name=disk", "--value-threshold=\">10:warning\""], p_send_request)
     assert code == 0
@@ -365,3 +376,46 @@ def test_heartbeat(p_send_request):
     options["heartbeat_level"] = "incorrect"
     with pytest.raises(AgentException, match=r"^Invalid heartbeat level \(incorrect\). Available options are \(warning, error, critical\)$"):
         cli.main(**options)
+
+@patch("ays_agent.cli.get_hostname", patch_string)
+def test_write_config():
+    setup_config()
+
+    options = [
+        "--org-secret=aaa",
+        "--parent=com.unittest.test",
+        "--create-child",
+        "--heartbeat-timeout=30",
+        "--heartbeat-level=warning",
+        "--write-config"
+    ]
+
+    # describe: write config to disk
+    result = runner.invoke(cli.app, options)
+    assert result.exit_code == 0
+    opts = load_options(get_config_path())
+    expected = CLIOptions(
+        org_secret="aaa",
+        server=cli.get_default_server(),
+        parent="com.unittest.test",
+        monitor_name="testing",
+        create_child=True,
+        heartbeat_timeout=30,
+        heartbeat_level="warning"
+    )
+    assert opts.__dict__ == expected.__dict__, "it: should save and load config"
+
+    os.unlink(config_path)
+
+def test_write_config():
+    setup_config()
+
+    # describe: no optionsn are loaded from disk
+    opts = load_options(get_config_path())
+    expected = CLIOptions(
+        org_secret="",
+        server="",
+        parent="",
+        monitor_name="",
+    )
+    assert opts.__dict__ == expected.__dict__, "it: should return empty options"

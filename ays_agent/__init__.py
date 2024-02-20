@@ -72,9 +72,15 @@ class CLIOptions(object):
             monitor_name=""
         )
 
+    def setv(self, name, arg) -> None:
+        val = arg.get(name, None)
+        if val:
+            self.__dict__[name] = val
+
     def merge(self, **kwargs) -> None:
         self.cli_options = CLIOptions(**kwargs)
-        # TODO: Merge these with options provided
+
+        self.setv("server", kwargs)
 
     def get_request(self) -> None:
         # TODO: Raise exception if options are invalid

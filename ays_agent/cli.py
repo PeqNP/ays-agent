@@ -8,6 +8,7 @@
 
 import typer
 import requests
+import socket
 
 from enum import Enum
 from rich import print
@@ -42,12 +43,24 @@ class MonitorResource(str, Enum):
 
 app = typer.Typer(no_args_is_help=True, invoke_without_command=True)
 
-def _get_default_server():
+def get_default_server():
     return "https://api.bithead.io:9443/agent/"
+
+def get_hostname():
+    return socket.gethostname()
 
 def _version_callback(value: bool) -> None:
     if value:
         typer.echo(f"{get_name()} v{get_version()}")
+        raise typer.Exit()
+
+def send_request(server, json):
+    resp = requests.request("POST", server, json=msg)
+    if resp.status_code != 204:
+        print("Failed to make request to @ys server")
+        print(resp)
+        raise typer.Exit(1)
+    else:
         raise typer.Exit()
 
 @app.callback()
@@ -59,7 +72,7 @@ def main(
     )] = False,
     server: Annotated[str, typer.Option(
         help="Path to the @ys server agent endpoint."
-    )] = _get_default_server(),
+    )] = get_default_server(),
     org_secret: Annotated[str, typer.Option(
         help="Organization secret. Required to interact with the respective org system graph."
     )] = "",
@@ -196,11 +209,6 @@ def main(
     if dry_run:
         print(f"Server: [green]{server}[/green]")
         print(msg)
+        raise typer.Exit()
     else:
-        resp = requests.request("POST", server, json=msg)
-        if resp.status_code != 204:
-            print("Failed to make request to @ys server")
-            print(resp)
-            typer.Exit(1)
-        else:
-            typer.Exit()
+        send_request(server, msg)

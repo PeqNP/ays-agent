@@ -5,13 +5,19 @@
 
 from setuptools import setup, find_packages
 
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
+
 setup(
     name='ays_agent',
     version='1.0',
     authors = [
         {"name": "Eric Chamberlain", "email": "bitheadrl@protonmail.com"}
     ],
-    description="@ys Agent",
+    description="@ys Agent Sensor",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     readme="README.md",
     requires_python=">=3.8",
     install_requires=[

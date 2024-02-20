@@ -1,6 +1,6 @@
 # ays-agent
 
-The At Your Service Agent is a Python app that allows you to monitor a system.
+The At Your Service Agent Sensor is a Python app that allows you to monitor a system.
 
 The agent provides a few mechanisms to report status to @ys. You can:
 
@@ -12,18 +12,17 @@ This agent integrates directly with the [Agent Sensor Service](https://api.bithe
 
 ## Installation
 
-TBD
+Install using `pip` (requires Python v3.8+).
 
-- `curl`? `pip`?
+```bash
+pip install ays-agent
+```
 
-The installation will:
-
-- Install the app in `/usr/bin/ays` or `C:\Program Files\x86\`
-- Add `ays-agent` to the `PATH`
+**TODO:** Windows self-contained installer
 
 ## What Next?
 
 Please refer to
 
-- `docs/api.md` for API documentation
-- `docs/usage.md` for several examples on how to use the agent
+- [API documentation](docs/api.md)
+- [Usage examples](docs/usage.md)

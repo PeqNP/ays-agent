@@ -35,6 +35,11 @@ def setup_config():
         os.unlink(config_path)
     set_config_path(config_path)
 
+@pytest.fixture(autouse=True)
+def setup_tests():
+    # Clean config before each test
+    setup_config()
+
 @patch("ays_agent.cli.send_request")
 @patch("ays_agent.cli.get_hostname", patch_string)
 def test_send_value(p_send_request):
@@ -379,8 +384,6 @@ def test_heartbeat(p_send_request):
 
 @patch("ays_agent.cli.get_hostname", patch_string)
 def test_write_config():
-    setup_config()
-
     options = [
         "--org-secret=aaa",
         "--parent=com.unittest.test",
@@ -408,8 +411,6 @@ def test_write_config():
     os.unlink(config_path)
 
 def test_write_config():
-    setup_config()
-
     # describe: no optionsn are loaded from disk
     opts = load_options(get_config_path())
     expected = CLIOptions(

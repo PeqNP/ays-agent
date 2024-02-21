@@ -23,6 +23,10 @@ from typing_extensions import Annotated
 from pathlib import Path
 
 from ays_agent import get_agent_payload, get_config_path, get_name, get_version, CLIOptions, load_options, save_options, strip_v, AgentException
+from ays_agent.stat.cpu import CPUMonitor
+from ays_agent.stat.disk import DiskMonitor
+from ays_agent.stat.memory import MemoryMonitor
+from ays_agent.stat.network import NetworkMonitor
 
 class NodeType(str, Enum):
     machine = "machine"
@@ -46,6 +50,13 @@ class MonitorResource(str, Enum):
     hdd = "hdd"
     ram = "ram"
     net = "net"
+
+RESOURCE_MONITORS = {
+    MonitorResource.cpu: CPUMonitor,
+    MonitorResource.hdd: DiskMonitor,
+    MonitorResource.ram: MemoryMonitor,
+    MonitorResource.net: NetworkMonitor
+}
 
 app = typer.Typer(no_args_is_help=True, invoke_without_command=True)
 
@@ -87,8 +98,8 @@ def main(
         show_default=False
     )] = False,
     server: Annotated[str, typer.Option(
-        help="Path to the @ys server agent endpoint."
-    )] = get_default_server(),
+        help=f"Path to the @ys server agent endpoint. Default: {get_default_server()}"
+    )] = None,
     org_secret: Annotated[str, typer.Option(
         help="Organization secret. Required to interact with the respective org system graph."
     )] = "",
@@ -230,13 +241,19 @@ def main(
         print("[green]Saved configuration to disk successfully.[/green]")
         raise typer.Exit()
 
+    if (monitor_resources or monitor_program or monitor_file) and not options.interval:
+        # Default is 5 minutes
+        options.interval = 60 * 5
+    if options.interval is not None and options.interval < 15:
+        raise AgentException("Interval provided ({options.interval}) must be 15 seconds or greater")
+
     if dry_run:
         if monitor_resources:
-            print(f"Monitor resources: {monitor_resources}")
+            print(f"Monitor resources: {monitor_resources} every {options.interval}s")
         elif monitor_program:
-            print(f"Monitor program: {monitoring_program}")
+            print(f"Monitor program: {monitoring_program} every {options.interval}s")
         elif monitor_file:
-            print(f"Monitor file: {monitor_file}")
+            print(f"Monitor file: {monitor_file} every {options.interval}s")
         print(f"Server: [green]{server}[/green]")
         print(msg)
         raise typer.Exit()
@@ -246,17 +263,41 @@ def main(
         for res in resources:
             if res not in MonitorResource.__members__:
                 raise AgentException(f"Invalid monitor resource ({res}). Available options are ({', '.join(MonitorResource.__members__)}).")
-        options = monitor_resources.split(",")
-        # TODO: Monitor resources
+        monitor_options = monitor_resources.split(",")
+        # Get class defintions of monitors to use
+        if MonitorResource.all in monitor_options:
+            monitors = RESOURCE_MONITORS.values()
+        else:
+            monitors = list(map(lambda x: RESOURCE_MONITORS[x], monitor_options))
+        # Instantiate and start monitors
+        monitors = list(map(lambda x: x(), monitors))
+        for m in monitors: m.start()
+
+        @fastapp.on_event("startup")
+        @repeat_every(seconds=options.interval)
+        async def run_forever() -> None:
+            values = []
+            for monitor in monitors:
+                # NOTE: This doesn't provide thresholds for values. If thresholds
+                # are required, use the `com.bithead.template.agent_resources`
+                # template.
+                values.extend(monitor.get_values(options.interval))
+            msg["values"] = values
+            send_request(server, msg)
+
+            log = logging.getLogger("uvicorn.access")
+            log.info(f"Sent agent message with ({len(values)}) values")
+
+        uvicorn.run(fastapp, host="0.0.0.0", port=port)
     elif monitor_program:
         # TODO: Execute program
         pass
     elif monitor_file:
         # TODO: Monitor file
         pass
-    elif interval:
+    elif options.interval:
         @fastapp.on_event("startup")
-        @repeat_every(seconds=interval)
+        @repeat_every(seconds=options.interval)
         async def run_forever() -> None:
             send_request(server, msg)
 

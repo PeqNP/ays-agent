@@ -1,5 +1,7 @@
 import psutil
 
+from typing import List
+
 from ays_agent.stat import format_bytes
 
 class MemoryMonitor(object):
@@ -21,3 +23,9 @@ class MemoryMonitor(object):
         total, used, percent = self.get_stats()
         return format_bytes(total), format_bytes(used), f"{percent}%"
 
+    def get_values(self, delay: int) -> List[dict]:
+        """ Get list of values that represent an `AgentValue`. """
+        total, used, percent = self.get_stats()
+        return [
+            {"name": "mem_used", "value": percent}
+        ]

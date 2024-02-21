@@ -1,5 +1,7 @@
 import psutil
 
+from typing import List
+
 from ays_agent.stat import format_bytes, get_base
 
 class NetworkMonitor(object):
@@ -29,3 +31,11 @@ class NetworkMonitor(object):
         stats = self.get_stats(delay)
         stats = tuple(map(lambda x: format_bytes(x, base), stats))
         return stats
+
+    def get_values(self, delay: int) -> List[dict]:
+        """ Get list of values that represent an `AgentValue`. """
+        sent, recv, up, dl = self.get_stats(delay)
+        return [
+            {"name": "net_sent", "value": up},
+            {"name": "net_recv", "value": dl}
+        ]

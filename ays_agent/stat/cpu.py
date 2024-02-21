@@ -1,5 +1,7 @@
 import psutil
 
+from typing import List
+
 class CPUMonitor(object):
     def __init__(self):
         self.cores = psutil.cpu_count(logical=False)
@@ -20,3 +22,10 @@ class CPUMonitor(object):
         cores, usage = self.get_stats()
         return cores, f"{usage}%"
 
+    def get_values(self, delay: int) -> List[dict]:
+        """ Get list of values that represent an `AgentValue`. """
+        cores, usage = self.get_stats()
+        return [
+            {"name": "cpu_cores", "value": cores},
+            {"name": "cpu_usage", "value": usage}
+        ]

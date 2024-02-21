@@ -168,7 +168,7 @@ def get_agent_payload(options) -> None:
     if options.child:
         params["relationship"] = {"type": "child", "monitor_name": options.monitor_name, "path": get_formatted_node_name(options.child)}
     elif options.create_child:
-        params["relationship"] = {"type": "child", "monitor_name": options.monitor_name, "path": options.monitor_name}
+        params["relationship"] = {"type": "child", "monitor_name": options.monitor_name, "path": get_formatted_node_name(options.monitor_name.lower())}
     else:
         params["relationship"] = {"type": "parent", "monitor_name": options.monitor_name}
     if options.managed is not None:
@@ -253,9 +253,13 @@ def get_value(name: Union[str, None], value: str, threshold: Union[str, None], i
         value.pop("threshold", None)
     return value
 
-def strip_v(v, values):
+def strip_v(v: str, values: Optional[List[any]] = None):
     if v:
         return list(map(lambda x: x.strip(), v.split(",")))
+    elif values is None:
+        # NOTE: This fn is a bit overloaded, but it's fine for now. There should probably
+        # be 2 strip_v fns. One which requires values, and another that doesn't.
+        raise AgentException("Attempting to strip an string value")
     else:
         return [None] * len(values)
 

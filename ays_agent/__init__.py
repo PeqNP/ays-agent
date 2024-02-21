@@ -253,7 +253,7 @@ def get_value(name: Union[str, None], value: str, threshold: Union[str, None], i
         value.pop("threshold", None)
     return value
 
-def strip_v(v):
+def strip_v(v, values):
     if v:
         return list(map(lambda x: x.strip(), v.split(",")))
     else:
@@ -261,11 +261,11 @@ def strip_v(v):
 
 def get_values(names: Union[str, None], values: str, thresholds: Union[str, None]) -> List[dict]:
     """ Returns an array of dict values that represent an `AgentValue`. """
-    values = strip_v(values)
-    names = strip_v(names)
+    values = strip_v(values, values)
+    names = strip_v(names, values)
     if len(names) != len(values):
         raise AgentException(f"The number of names ({len(names)}) must match the number of values ({len(values)}) provided")
-    thresholds = strip_v(thresholds)
+    thresholds = strip_v(thresholds, values)
     if len(thresholds) != len(values):
         raise AgentException(f"The number of thresholds ({len(thresholds)}) must match the number of values ({len(values)}) provided")
     r_values = []

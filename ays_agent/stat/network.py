@@ -1,20 +1,6 @@
 import psutil
-import sys
 
-from ays_agent.stat import format_bytes
-
-# For some reason macOS uses 1000 for byte conversions.
-# Please compare values produced here to that of Activity Monitor.
-MACOS_BASE = 1000
-OTHER_BASE = 1024
-
-def get_base() -> int:
-    """ Returns respective used for computation of byte-sizes given the
-    respective platform the agent is running on."""
-    if sys.platform == 'darwin':
-        return MACOS_BASE
-    else:
-        return OTHER_BASE
+from ays_agent.stat import format_bytes, get_base
 
 class NetworkMonitor(object):
     def __init__(self):

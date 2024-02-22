@@ -22,8 +22,10 @@ I use [multipass](https://multipass.run/install) for this scenario.
 Then run the command, within the VM, to test the installation:
 
 ```bash
-$ python3 -m pip install --index-url https://test.pypi.org/simple/ ays-agent
+$ python3 -m pip install --no-cache-dir --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ ays-agent
 ```
+
+This fails 100% of the time as `fastapi` has a broken developer dependency `test.pypi.org`. Using the `extra-index-url` does not pull modules exclusively from PyPI. This would solve the problem. YOLO to prod LOL!
 
 You may need to install `pip` first:
 

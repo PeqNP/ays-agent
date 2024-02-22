@@ -11,7 +11,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name='ays_agent',
-    version='1.0',
+    version='0.9',
     authors = [
         {"name": "Eric Chamberlain", "email": "bitheadrl@protonmail.com"}
     ],

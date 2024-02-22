@@ -285,9 +285,6 @@ def main(
             msg["values"] = values
             send_request(server, msg)
 
-            log = logging.getLogger("uvicorn.access")
-            log.info(f"Sent agent message with ({len(values)}) values")
-
         uvicorn.run(fastapp, host="0.0.0.0", port=port)
     elif monitor_program:
         # TODO: Execute program

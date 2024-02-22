@@ -27,5 +27,5 @@ class MemoryMonitor(object):
         """ Get list of values that represent an `AgentValue`. """
         total, used, percent = self.get_stats()
         return [
-            {"name": "mem_used", "value": percent}
+            {"name": "RAM %", "value": percent}
         ]

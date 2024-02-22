@@ -2,7 +2,7 @@ import psutil
 
 from typing import List
 
-from ays_agent.stat import format_bytes, get_base
+from ays_agent.stat import format_bytes, get_base, get_megabytes
 
 class NetworkMonitor(object):
     def __init__(self):
@@ -36,6 +36,6 @@ class NetworkMonitor(object):
         """ Get list of values that represent an `AgentValue`. """
         sent, recv, up, dl = self.get_stats(delay)
         return [
-            {"name": "net_sent", "value": up},
-            {"name": "net_recv", "value": dl}
+            {"name": "Net Sent/sec", "value": get_megabytes(up)},
+            {"name": "Net Received/sec", "value": get_megabytes(dl)}
         ]

@@ -26,6 +26,5 @@ class CPUMonitor(object):
         """ Get list of values that represent an `AgentValue`. """
         cores, usage = self.get_stats()
         return [
-            {"name": "cpu_cores", "value": cores},
-            {"name": "cpu_usage", "value": usage}
+            {"name": "CPU %", "value": usage}
         ]

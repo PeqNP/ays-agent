@@ -1,18 +1,16 @@
+import logging
 import psutil
+import sys
 
 from typing import List
 from typing_extensions import Optional
 
-from ays_agent.stat import format_bytes, get_base
-
-def get_default_path():
-    # This may require returning `C:\` on Windows
-    return "/"
+from ays_agent.stat import format_bytes, get_base, get_megabytes, get_default_mountpoint
 
 class DiskMonitor(object):
     def __init__(self, path: Optional[str] = None):
-        # Disk path to monitor
-        self.path = path or get_default_path()
+        # Disk path (mountpoint) to monitor
+        self.path = path or get_default_mountpoint()
         self.bytes_read = 0
         self.bytes_written = 0
 
@@ -49,7 +47,7 @@ class DiskMonitor(object):
         """ Get list of values that represent an `AgentValue`. """
         total, used, percent, bytes_read, bytes_written, bytes_r, bytes_w = self.get_stats(delay)
         return [
-            {"name": "disk_used", "value": percent},
-            {"name": "disk_read", "value": bytes_r},
-            {"name": "disk_write", "value": bytes_w}
+            {"name": "Disk Used %", "value": percent},
+            {"name": "Disk R/s", "value": get_megabytes(bytes_r)},
+            {"name": "Disk W/s", "value": get_megabytes(bytes_w)}
         ]

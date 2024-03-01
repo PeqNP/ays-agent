@@ -126,21 +126,34 @@ class CLIOptions(object):
 
 # Public API
 
-def load_options(path: str) -> CLIOptions:
-    """ Load ays agent server options from config file.
-
-    Returns an options, if config file not found.
-    """
-    if os.path.isfile(path):
-        with open(path, "r") as fh:
-            opts = read_yaml(fh)
-        return CLIOptions(**opts)
+def get_empty_options() -> CLIOptions:
     return CLIOptions(
         org_secret="",
         server="",
         parent="",
         monitor_name=""
     )
+
+def load_options() -> CLIOptions:
+    """ Load ays agent server options from config file.
+
+    Returns an options, if config file not found.
+    """
+    path = get_config_path()
+    if os.path.isfile(path):
+        with open(path, "r") as fh:
+            opts = read_yaml(fh)
+        return CLIOptions(**opts)
+    return get_empty_options()
+
+def remove_options() -> None:
+    """ Remove options from disk.
+
+    Generally done before saving new options to disk.
+    """
+    path = get_config_path()
+    if os.path.isfile(path):
+        os.unlink(path)
 
 def save_options(options: CLIOptions) -> None:
     """ Save options to disk. """

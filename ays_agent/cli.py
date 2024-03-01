@@ -22,7 +22,8 @@ from typing import Optional
 from typing_extensions import Annotated
 from pathlib import Path
 
-from ays_agent import get_agent_payload, get_config_path, get_name, get_version, CLIOptions, load_options, save_options, strip_v, AgentException
+import ays_agent as lib
+
 from ays_agent.stat.cpu import CPUMonitor
 from ays_agent.stat.disk import DiskMonitor
 from ays_agent.stat.memory import MemoryMonitor
@@ -68,7 +69,7 @@ def get_hostname():
 
 def _version_callback(value: bool) -> None:
     if value:
-        typer.echo(f"{get_name()} v{get_version()}")
+        typer.echo(f"{lib.get_name()} v{lib.get_version()}")
         raise typer.Exit()
 
 def send_request(server, json):
@@ -200,8 +201,13 @@ def main(
         help="Emit the action that will take place, with the specified parameters, w/o sending data to @ys."
     )] = False,
 ) -> None:
-    # Load options from disk, if any
-    options = load_options(get_config_path())
+    # Do not load options if writing new config. This prevents old options from
+    # being merged with the new.
+    if write_config:
+        options = lib.get_empty_options()
+    else:
+        # Load options from disk, if any
+        options = lib.load_options()
     # Merge options provided
     options.merge(
         org_secret=org_secret,
@@ -228,16 +234,18 @@ def main(
         monitor_program=monitor_program
     )
 
-    if not monitor_name:
+    if not options.server:
+        options.server = get_default_server()
+    if not options.monitor_name:
         options.monitor_name = get_hostname()
 
     # Ensure options are valid. This must happen regardless if CLI options are
     # provided or not as the user may write invalid config to the config file.
-    server, msg = get_agent_payload(options)
+    server, msg = lib.get_agent_payload(options)
 
     # NOTE: Options must be checked before they are written to config.
     if write_config:
-        save_options(options)
+        lib.save_options(options)
         print("[green]Saved configuration to disk successfully.[/green]")
         raise typer.Exit()
 
@@ -245,24 +253,16 @@ def main(
         # Default is 5 minutes
         options.interval = 60 * 5
     if options.interval is not None and options.interval < 15:
-        raise AgentException("Interval provided ({options.interval}) must be 15 seconds or greater")
+        raise lib.AgentException("Interval provided ({options.interval}) must be 15 seconds or greater")
 
     if dry_run:
-        if monitor_resources:
-            print(f"Monitor resources: {monitor_resources} every {options.interval}s")
-        elif monitor_program:
-            print(f"Monitor program: {monitoring_program} every {options.interval}s")
-        elif monitor_file:
-            print(f"Monitor file: {monitor_file} every {options.interval}s")
         print(f"Server: [green]{server}[/green]")
-        print(msg)
-        raise typer.Exit()
 
     if monitor_resources:
-        resources = strip_v(monitor_resources)
+        resources = lib.strip_v(monitor_resources)
         for res in resources:
             if res not in MonitorResource.__members__:
-                raise AgentException(f"Invalid monitor resource ({res}). Available options are ({', '.join(MonitorResource.__members__)}).")
+                raise lib.AgentException(f"Invalid monitor resource ({res}). Available options are ({', '.join(MonitorResource.__members__)}).")
         monitor_options = monitor_resources.split(",")
         # Get class defintions of monitors to use
         if MonitorResource.all in monitor_options:
@@ -273,9 +273,7 @@ def main(
         monitors = list(map(lambda x: x(), monitors))
         for m in monitors: m.start()
 
-        @fastapp.on_event("startup")
-        @repeat_every(seconds=options.interval)
-        async def run_forever() -> None:
+        def get_message():
             values = []
             for monitor in monitors:
                 # NOTE: This doesn't provide thresholds for values. If thresholds
@@ -283,16 +281,40 @@ def main(
                 # template.
                 values.extend(monitor.get_values(options.interval))
             msg["values"] = values
-            send_request(server, msg)
+            return msg
+
+        if dry_run:
+            print(f"Monitor resources: ({monitor_resources}) every {options.interval}s")
+            print(get_message())
+            raise typer.Exit()
+
+        @fastapp.on_event("startup")
+        @repeat_every(seconds=options.interval)
+        async def run_forever() -> None:
+            m = get_message()
+            send_request(server, m)
 
         uvicorn.run(fastapp, host="0.0.0.0", port=port)
     elif monitor_program:
         # TODO: Execute program
-        pass
+
+        if dry_run:
+            print(f"Monitor program: ({monitor_program}) every {options.interval}s")
+            print(msg)
+            raise typer.Exit()
     elif monitor_file:
         # TODO: Monitor file
-        pass
+
+        if dry_run:
+            print(f"Monitor file: ({monitor_file}) every {options.interval}s")
+            print(msg)
+            raise typer.Exit()
     elif options.interval:
+        if dry_run:
+            print(f"Sending message every {options.interval}s")
+            print(msg)
+            raise typer.Exit()
+
         @fastapp.on_event("startup")
         @repeat_every(seconds=options.interval)
         async def run_forever() -> None:
@@ -300,4 +322,9 @@ def main(
 
         uvicorn.run(fastapp, host="0.0.0.0", port=port)
     else:
+        if dry_run:
+            print(f"One-shot")
+            print(msg)
+            raise typer.Exit()
+
         send_request(server, msg)

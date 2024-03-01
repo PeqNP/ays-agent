@@ -10,8 +10,8 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(
-    name='ays_agent',
-    version='0.9',
+    name="ays_agent",
+    version="1.1",
     authors = [
         {"name": "Eric Chamberlain", "email": "bitheadrl@protonmail.com"}
     ],

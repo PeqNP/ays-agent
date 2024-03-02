@@ -1,0 +1,29 @@
+<script type="text/javascript">
+    RED.nodes.registerType("ays-agent", {
+        category: "function",
+        color: "#e7e7ae",
+        defaults: {
+            server: {value: "", type: "ays-agent-server"}
+            name: {value: ""}
+        },
+        inputs: 1,
+        outputs: 0,
+        icon: "bridge.svg",
+        align: "right",
+        inputLabels: "sample value",
+        label: function() {
+            return this.name||"ays-agent";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="ays-agent">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ays-agent">
+    <p>Send sample value from HW/SW systems to the At Your Service agent</p>
+</script>

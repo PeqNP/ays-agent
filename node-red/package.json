@@ -12,7 +12,8 @@
   ],
   "node-red": {
       "nodes": {
-          "lower-case": "lower-case.js"
+          "ays-agent": "ays-agent.js"
+          "ays-agent": "ays-agent-server.js"
       }
   },
   "author": "Eric Chamberlain",

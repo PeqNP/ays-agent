@@ -1,0 +1,18 @@
+<script type="text/javascript">
+    RED.nodes.registerType('ays-agent-server',{
+        category: 'config',
+        defaults: {
+            endpoint: {value: "http://localhost:9443/agent/", required: true},
+        },
+        label: function() {
+            return this.endpoint;
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="ays-agent-server">
+    <div class="form-row">
+        <label for="node-config-input-host"><i class="fa fa-bookmark"></i> Host</label>
+        <input type="text" id="node-config-input-endpoint">
+    </div>
+</script>

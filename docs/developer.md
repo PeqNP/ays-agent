@@ -40,3 +40,12 @@ Make sure you are using Python 3.8+. Execute `python3 --version` to get version.
 - The PyPI publisher `environment` must be the same value for the `environment` within the `publish.yml` file for the respective job. e.g. In `publish.yml` the `environment` for `publish-to-testpypi` is `testpypi`. Therefore, the `environment` for the publisher on the test PyPI website must also be `testpypi`.
 
 
+# Node-RED
+
+To install the node locally:
+
+Install from Node-RED's config folder.
+```
+$ cd ~/.node-red
+$ npm install ~/path/to/ays-agent/node-red
+```

@@ -1,8 +1,9 @@
 <script type="text/javascript">
-    RED.nodes.registerType('ays-agent-server',{
-        category: 'config',
+    RED.nodes.registerType("ays-agent-server", {
+        category: "config",
         defaults: {
             endpoint: {value: "http://localhost:9443/agent/", required: true},
+            orgSecret: {value: "", required: true}
         },
         label: function() {
             return this.endpoint;
@@ -12,7 +13,9 @@
 
 <script type="text/html" data-template-name="ays-agent-server">
     <div class="form-row">
-        <label for="node-config-input-host"><i class="fa fa-bookmark"></i> Host</label>
+        <label for="node-config-input-endpoint"><i class="fa fa-bookmark"></i> Endpoint</label>
         <input type="text" id="node-config-input-endpoint">
+        <label for="node-config-input-org-secret"><i class="fa fa-bookmark"></i> Org Secret</label>
+        <input type="text" id="node-config-input-org-secret">
     </div>
 </script>

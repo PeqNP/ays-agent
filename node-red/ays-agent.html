@@ -1,10 +1,13 @@
 <script type="text/javascript">
     RED.nodes.registerType("ays-agent", {
-        category: "function",
+        category: "network",
         color: "#e7e7ae",
         defaults: {
-            server: {value: "", type: "ays-agent-server"}
-            name: {value: ""}
+            server: {value: "", type: "ays-agent-server"},
+            name: {value: ""},
+            aysParentNode: {value: ""},
+            aysChildNode: {value: ""},
+            aysMonitorName: {value: "node-red"}
         },
         inputs: 1,
         outputs: 0,
@@ -19,8 +22,12 @@
 
 <script type="text/html" data-template-name="ays-agent">
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
+        <label for="node-input-ays-parent-node"><i class="fa fa-tag"></i> Parent Node</label>
+        <input type="text" id="node-input-ays-parent_node" placeholder="Parent node path">
+        <label for="node-input-ays-child-node"><i class="fa fa-tag"></i> Child Node</label>
+        <input type="text" id="node-input-ays-child-node" placeholder="Child node name or relative path">
+        <label for="node-input-ays-monitor-name"><i class="fa fa-tag"></i> Monitor Name</label>
+        <input type="text" id="node-input-ays-monitor-name" placeholder="Monitor name">
     </div>
 </script>
 

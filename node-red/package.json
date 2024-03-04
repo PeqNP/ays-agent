@@ -12,7 +12,7 @@
   ],
   "node-red": {
       "nodes": {
-          "ays-agent": "ays-agent-server.js"
+          "ays-agent": "ays-agent.js"
       }
   },
   "author": "Eric Chamberlain",

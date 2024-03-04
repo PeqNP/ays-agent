@@ -42,10 +42,11 @@ Make sure you are using Python 3.8+. Execute `python3 --version` to get version.
 
 # Node-RED
 
-To install the node locally:
+To install the node locally, run the commands below from inside the Node-RED's config folder:
 
-Install from Node-RED's config folder.
 ```
 $ cd ~/.node-red
 $ npm install ~/path/to/ays-agent/node-red
 ```
+
+[Subflow deployment documentation](https://nodered.org/docs/creating-nodes/subflow-modules)

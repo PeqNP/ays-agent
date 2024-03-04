@@ -11,6 +11,7 @@
     "ays-agent"
   ],
   "node-red": {
+      "version": ">=3.0.0",
       "nodes": {
           "ays-agent": "ays-agent.js"
       }

@@ -49,4 +49,7 @@ $ cd ~/.node-red
 $ npm install ~/path/to/ays-agent/node-red
 ```
 
-[Subflow deployment documentation](https://nodered.org/docs/creating-nodes/subflow-modules)
+- [Subflow modules](https://nodered.org/docs/creating-nodes/subflow-modules)
+- [Packaging modules](https://nodered.org/docs/creating-nodes/packaging)
+
+You may also install the subflow using the instructions outlined in the [node-red README.md](node-red/README.md) file.

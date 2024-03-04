@@ -4,9 +4,32 @@ This provides an interface to the At Your Service agent from within Node-RED. Th
 
 ## Installation
 
+Please note: The agent has only been tested on Node-RED v3.1.6.
+
+### Install the Subflow
+
+**Import subflow file**
+
+- Clone the `ays-agent` repository
+- Open Node-RED
+- Tap the menu button on the top right > `Import` > `select a file to import`
+- Select the `/path/to/ays-agent/node-red/subflow.json` file
+
+**Import as text**
+
+You may also copy the subflow JSON structure, from within the Git repository, and paste in the `Clipboard` directly:
+
+- Open Node-RED
+- Tap the menu button on the top right > `Import` > `select a file to import`
+- Within the Git repository, go to the `ays-agent/node-red/subflow.json` file
+- Tap the `Raw` button
+- Copy the entire subflow structure
+- Paste the contents into the `Clipboard`'s text area box
+- Tap `Import`
+
 ### Add Environment Variables
 
-Tap the menu button on the top right of the menu > `Settings` > `Environment`. Add these environment variables:
+Tap the menu button on the top right > `Settings` > `Environment`. Add these environment variables:
 
 - `AYS_SERVER` with the value `http://localhost:9443/agent/`. If necessary, please change this to your location of your local instance
 - `AYS_ORG_SECRET` with the value of your respective Organization's secret.
@@ -16,10 +39,6 @@ Tap the menu button on the top right of the menu > `Settings` > `Environment`. A
   - Tap the `Organization configuration`
   - Tap the "Copy" icon in the `Secret` row
   - Paste this value into your `AYS_ORG_SECRET` environment variable value
-
-### Install the Subflow from NPM
-
-TBD:
 
 ## Usage
 

@@ -71,6 +71,17 @@
                 }
             },
             {
+                "name": "AYS_MONITOR_THRESHOLD",
+                "type": "str",
+                "value": "",
+                "ui": {
+                    "icon": "font-awesome/fa-bar-chart",
+                    "label": {
+                        "en-US": "Threshold"
+                    }
+                }
+            },
+            {
                 "name": "AYS_HEARTBEAT",
                 "type": "num",
                 "value": "300",
@@ -158,7 +169,7 @@
         "type": "function",
         "z": "1740557087110d8c",
         "name": "create_payload",
-        "func": "var server = env.get(\"AYS_SERVER\").trim();\nvar org_secret = env.get(\"AYS_ORG_SECRET\").trim();\nvar parent_node = env.get(\"AYS_PARENT\").trim();\nvar child_node = env.get(\"AYS_CHILD\").trim();\nvar monitor_name = env.get(\"AYS_MONITOR_NAME\").trim();\nvar heartbeat = env.get(\"AYS_HEARTBEAT\");\nvar template = env.get(\"AYS_TEMPLATE\").trim();\n\n// TODO: What happens if server is not set?\n\n// Set the \"error\" status of the node\nfunction set_error(msg, text) {\n    var status = ({fill: \"red\", shape: \"ring\", text: text});\n    msg.payload = status;\n    return msg;\n}\n\nif (server.length == 0) {\n    node.error(\"A global AYS_SERVER variable must be configured\");\n    return set_error(msg, \"AYS_SERVER required\");\n}\nif (org_secret.length == 0) {\n    node.error(\"A global AYS_ORG_SECRET must be configured\");\n    // TODO: Display an error under the node\n    return set_error(msg, \"AYS_ORG_SECRET required\");\n}\nif (parent_node.length == 0) {\n    node.error(\"A parent node must be provided\");\n    return set_error(msg, \"Parent Node is required\");\n}\nif (child_node.length == 0) {\n    node.error(\"A child node, or child relative path, must be provided\");\n    return set_error(msg, \"Child Node is required\");\n}\nif (monitor_name.length == 0) {\n    monitor_name = \"node-red\";\n}\n\nvar payload = {\n    org_secret: org_secret, // \"zki8y1v\"\n    parent: {\n        property: \"path\",\n        value: parent_node\n    },\n    relationship: {\n        type: \"child\",\n        monitor_name: monitor_name,\n        path: child_node\n    },\n    value: {\n        name: \"value\",\n        value: msg.payload\n    },\n    check: true\n};\n\nif (template.length != 0) {\n    payload.template = template;\n}\n\nif (heartbeat > 0) {\n    payload.heartbeat = {\n        \"timeout\": heartbeat,\n        \"level\": \"critical\"\n    }\n}\n\nmsg.url = server;\nmsg.aysPayload = payload;\nmsg.payload = ({ fill: \"green\", shape: \"dot\"});\n\nreturn msg;",
+        "func": "var server = env.get(\"AYS_SERVER\").trim();\nvar org_secret = env.get(\"AYS_ORG_SECRET\").trim();\nvar parent_node = env.get(\"AYS_PARENT\").trim();\nvar child_node = env.get(\"AYS_CHILD\").trim();\nvar monitor_name = env.get(\"AYS_MONITOR_NAME\").trim();\nvar threshold = env.get(\"AYS_MONITOR_THRESHOLD\").trim();\nvar heartbeat = env.get(\"AYS_HEARTBEAT\");\nvar template = env.get(\"AYS_TEMPLATE\").trim();\n\n// TODO: What happens if server is not set?\n\n// Set the \"error\" status of the node\nfunction set_error(msg, text) {\n    var status = ({fill: \"red\", shape: \"ring\", text: text});\n    msg.payload = status;\n    return msg;\n}\n\nif (server.length == 0) {\n    node.error(\"A global AYS_SERVER variable must be configured\");\n    return set_error(msg, \"AYS_SERVER required\");\n}\nif (org_secret.length == 0) {\n    node.error(\"A global AYS_ORG_SECRET must be configured\");\n    // TODO: Display an error under the node\n    return set_error(msg, \"AYS_ORG_SECRET required\");\n}\nif (parent_node.length == 0) {\n    node.error(\"A parent node must be provided\");\n    return set_error(msg, \"Parent Node is required\");\n}\nif (child_node.length == 0) {\n    node.error(\"A child node, or child relative path, must be provided\");\n    return set_error(msg, \"Child Node is required\");\n}\nif (monitor_name.length == 0) {\n    monitor_name = \"node-red\";\n}\n\nvar payload = {\n    org_secret: org_secret, // \"zki8y1v\"\n    parent: {\n        property: \"path\",\n        value: parent_node\n    },\n    relationship: {\n        type: \"child\",\n        monitor_name: monitor_name,\n        path: child_node\n    },\n    value: {\n        name: \"value\",\n        value: msg.payload\n    },\n    check: true\n};\n\nif (threshold.length > 0) {\n    payload.value.threshold_format = threshold;\n}\n\nif (template.length != 0) {\n    payload.template = template;\n}\n\nif (heartbeat > 0) {\n    payload.heartbeat = {\n        \"timeout\": heartbeat,\n        \"level\": \"critical\"\n    }\n}\n\nmsg.url = server;\nmsg.aysPayload = payload;\nmsg.payload = ({ fill: \"green\", shape: \"dot\"});\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -215,7 +226,7 @@
         "type": "function",
         "z": "1740557087110d8c",
         "name": "status",
-        "func": "// If error occurred, display error status\nif (msg.statusCode >= 400 || msg.statusCode == \"ECONNREFUSED\") {\n    if (typeof msg.payload === \"string\" || msg.payload instanceof String) {\n        node.error(msg.payload, msg);\n        msg.payload = ({ fill: \"red\", shape: \"ring\", text: \"Request failed: \" + msg.statusCode });\n    }\n    else {\n        node.error(msg.payload.error.message, msg);\n        msg.payload = ({ fill: \"red\", shape: \"ring\", text: msg.payload.error.message });\n    }\n}\nelse {\n    node.error(msg)\n    msg.payload = ({fill: \"green\", shape: \"dot\"});\n}\n\nreturn msg;",
+        "func": "// If error occurred, display error status\nif (msg.statusCode >= 400 || msg.statusCode == \"ECONNREFUSED\") {\n    if (typeof msg.payload === \"string\" || msg.payload instanceof String) {\n        node.error(msg.payload, msg);\n        msg.payload = ({ fill: \"red\", shape: \"ring\", text: \"Request failed: \" + msg.statusCode });\n    }\n    else {\n        node.error(msg.payload.error.message, msg);\n        msg.payload = ({ fill: \"red\", shape: \"ring\", text: msg.payload.error.message });\n    }\n}\nelse {\n    msg.payload = ({fill: \"green\", shape: \"dot\"});\n}\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -227,14 +238,5 @@
         "wires": [
             []
         ]
-    },
-    {
-        "id": "3287b886e8bd6bbb",
-        "type": "subflow:1740557087110d8c",
-        "z": "1c6a5a2f2311697a",
-        "name": "",
-        "x": 300,
-        "y": 400,
-        "wires": []
     }
 ]

@@ -56,7 +56,7 @@ Connect any of your HW/SW systems to the `ays-agent` input. The input must be a 
 **Optional Parameters:**
 
 - `Monitor Name` The name of the monitor. If none is provided, `node-red` is used.
-- `Threshold` Trigger a threshold if a value falls outside of specified range. Refer to the [ays-agent API docs](docs/api.md) for a list of supported threshold formats.
+- `Threshold` Trigger a threshold if a value falls outside of specified range. Refer to the [ays-agent API docs](../docs/api.md) for a list of supported threshold formats.
 - `Heartbeat` The default is set for 5 minutes. If you don't want to monitor the node, set the heartbeat value to `0`.
 - `Template` Adopt a template located at the specified node path.
 

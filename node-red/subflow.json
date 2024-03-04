@@ -195,7 +195,7 @@
         "type": "function",
         "z": "1740557087110d8c",
         "name": "filter_error_status",
-        "func": "// Filter messages that have no URL. This happens when an \"error\" status message\n// is shown. Terminate out the flow immediately.\nif (msg.url == null) {\n    return null;\n}\n\nmsg.payload = msg.aysPayload;\nreturn msg;",
+        "func": "// Filter messages that have no URL. This happens when an \"error\" status message\n// is shown. Terminate out the flow immediately.\nif (msg.url == null) {\n    return null;\n}\n\nmsg.payload = msg.aysPayload;\ndelete msg.aysPayload;\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -215,7 +215,7 @@
         "type": "function",
         "z": "1740557087110d8c",
         "name": "status",
-        "func": "if (msg.payload.error != null) {\n    node.error(msg.payload.error.message, msg);\n    msg.payload = ({fill: \"red\", shape: \"ring\", text: msg.payload.error.message});\n}\nelse {\n    msg.payload = ({fill: \"green\", shape: \"dot\"});\n}\n\nreturn msg;",
+        "func": "// If error occurred, display error status\nif (msg.statusCode >= 400 || msg.statusCode == \"ECONNREFUSED\") {\n    if (typeof msg.payload === \"string\" || msg.payload instanceof String) {\n        node.error(msg.payload, msg);\n        msg.payload = ({ fill: \"red\", shape: \"ring\", text: \"Request failed: \" + msg.statusCode });\n    }\n    else {\n        node.error(msg.payload.error.message, msg);\n        msg.payload = ({ fill: \"red\", shape: \"ring\", text: msg.payload.error.message });\n    }\n}\nelse {\n    node.error(msg)\n    msg.payload = ({fill: \"green\", shape: \"dot\"});\n}\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -229,7 +229,7 @@
         ]
     },
     {
-        "id": "7ce5929bfa9ff43e",
+        "id": "3287b886e8bd6bbb",
         "type": "subflow:1740557087110d8c",
         "z": "1c6a5a2f2311697a",
         "name": "",

@@ -38,6 +38,16 @@ Optional configuration:
 - Heartbeat. The default is set for 5 minutes. If you don't want to monitor the node, set the heartbeat value to `0`.
 - Template. Adopt a template located at the specified node path.
 
+## Debugging
+
+The `ays-agent` subflow emits `node.error`s and provides node status messages. If an error status displays the node, please open the Debug menu for more information.
+
+The most common problems are:
+- A required parameter is not provided
+- Connection to the AYS server failed
+
+Again, a status message (displayed below the node), and additional debugging information can be found in the Debug menu.
+
 ## Outro
 
 Do you need help? Do you have a feature suggestion? Please call me at 253-329-1280.

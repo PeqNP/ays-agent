@@ -38,18 +38,3 @@ Make sure you are using Python 3.8+. Execute `python3 --version` to get version.
 ## Notes
 
 - The PyPI publisher `environment` must be the same value for the `environment` within the `publish.yml` file for the respective job. e.g. In `publish.yml` the `environment` for `publish-to-testpypi` is `testpypi`. Therefore, the `environment` for the publisher on the test PyPI website must also be `testpypi`.
-
-
-# Node-RED
-
-To install the node locally, run the commands below from inside the Node-RED's config folder:
-
-```
-$ cd ~/.node-red
-$ npm install ~/path/to/ays-agent/node-red
-```
-
-- [Subflow modules](https://nodered.org/docs/creating-nodes/subflow-modules)
-- [Packaging modules](https://nodered.org/docs/creating-nodes/packaging)
-
-You may also install the subflow using the instructions outlined in the [node-red README.md](node-red/README.md) file.
